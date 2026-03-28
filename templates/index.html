@@ -589,6 +589,29 @@
             color: var(--text);
         }
 
+        .nearest-card {
+            grid-column: 1 / -1;
+        }
+
+        .nearest-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nearest-input {
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .nearest-status {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--muted);
+            min-height: 16px;
+        }
+
         .panel {
             background: var(--panel);
             border: 1px solid var(--border);
@@ -671,7 +694,7 @@
         .col-delivery { width: 230px; }
         .col-appt { width: 170px; }
         .col-eta { width: 120px; }
-        .col-eta-status { width: 100px; }
+        .col-eta-status { width: 160px; }
         .col-miles { width: 90px; }
         .col-notes { width: 300px; }
         .col-assign { width: 110px; }
@@ -784,6 +807,22 @@
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
         }
 
+        .secondary-btn {
+            height: 38px;
+            padding: 0 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .secondary-btn:hover {
+            border-color: var(--blue);
+        }
+
         .assign-btn, .remove-btn {
             width: 100%;
             height: 38px;
@@ -821,10 +860,27 @@
         .eta-close { color: #fbbf24; font-weight: 700; }
         .eta-ontime { color: #4ade80; font-weight: 700; }
         .eta-empty { color: var(--muted); }
+        .eta-subtext {
+            display: block;
+            margin-top: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
 
         body.light-mode .eta-late { color: #b91c1c; }
         body.light-mode .eta-close { color: #b45309; }
         body.light-mode .eta-ontime { color: #047857; }
+
+        .location-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .nearest-meta {
+            font-size: 11px;
+            color: var(--muted);
+        }
 
         .row-good td:first-child { border-left: 4px solid #22c55e; }
         .row-rest td:first-child { border-left: 4px solid #eab308; }
@@ -842,6 +898,8 @@
             .top-tools { width: 100%; }
             .search-box input { width: 100%; }
             .profile-popup { width: 280px; }
+            .nearest-controls { flex-direction: column; align-items: stretch; }
+            .nearest-input { min-width: 100%; }
         }
 
         @media (max-width: 700px) {
@@ -1016,12 +1074,26 @@
                 <div class="stat-label">Sleeper / On Duty</div>
                 <div class="stat-value">{{ ns.sleeper + ns.onduty }}</div>
             </div>
+            <div class="stat-card nearest-card">
+                <div class="stat-label">Find Nearest Drivers By Address</div>
+                <div class="nearest-controls">
+                    <input
+                        type="text"
+                        id="nearestAddressInput"
+                        class="form-input nearest-input address-autocomplete"
+                        list="addressSuggestions"
+                        placeholder="Enter any address to sort drivers by nearest">
+                    <button type="button" class="secondary-btn" id="nearestSearchBtn">Find Nearest</button>
+                    <button type="button" class="secondary-btn" id="nearestClearBtn">Clear</button>
+                </div>
+                <div class="nearest-status" id="nearestStatus"></div>
+            </div>
         </div>
 
         <div class="panel">
             <div class="panel-header">
                 <div class="panel-title">Live Driver List</div>
-                <div class="panel-subtitle">
+                <div class="panel-subtitle" id="panelSubtitle">
                     {% if current_page == "my" %}
                         Only assigned drivers for {{ selected_user }}
                     {% elif current_page == "risk" %}
@@ -1055,7 +1127,7 @@
                         {% set status_upper = d.status.upper() %}
                         {% set minutes_val = d.minutes|int %}
 
-                        <tr class="row-{{ d.risk }}">
+                        <tr class="row-{{ d.risk }}" data-driver-key="{{ d.driver_key }}">
                             <td class="col-name" title="{{ d.name }}">
                                 <span class="driver-name">{{ d.name }}</span>
                             </td>
@@ -1078,7 +1150,12 @@
                                 {% endif %}
                             </td>
 
-                            <td class="col-location" title="{{ d.location }}">{{ d.location }}</td>
+                            <td class="col-location" title="{{ d.location }}">
+                                <div class="location-cell">
+                                    <span>{{ d.location }}</span>
+                                    <span class="nearest-meta" id="nearest-meta-{{ d.driver_key }}"></span>
+                                </div>
+                            </td>
 
                             <td class="col-minutes">
                                 {% if minutes_val >= 60 %}
@@ -1093,8 +1170,9 @@
                             <td class="col-delivery">
                                 <input
                                     type="text"
-                                    class="form-input autosave-input delivery-input"
+                                    class="form-input autosave-input delivery-input address-autocomplete"
                                     data-driver-key="{{ d.driver_key }}"
+                                    list="addressSuggestions"
                                     value="{{ d.delivery_address }}"
                                     placeholder="Delivery address">
                                 <div class="autosave-status" id="save-status-{{ d.driver_key }}"></div>
@@ -1119,6 +1197,9 @@
                             <td class="col-eta-status" id="eta-status-{{ d.driver_key }}">
                                 {% if d.eta_status == "LATE" %}
                                     <span class="eta-late">LATE</span>
+                                    {% if d.eta_delay_text %}
+                                        <span class="eta-late eta-subtext">{{ d.eta_delay_text }}</span>
+                                    {% endif %}
                                 {% elif d.eta_status == "CLOSE" %}
                                     <span class="eta-close">CLOSE</span>
                                 {% elif d.eta_status == "ON TIME" %}
@@ -1177,17 +1258,30 @@
     <input type="hidden" name="driver_key" id="removeDriverKey">
 </form>
 
+<datalist id="addressSuggestions"></datalist>
+
 <script>
     const searchInput = document.getElementById("searchInput");
     const table = document.getElementById("driverTable");
-    const rows = table.getElementsByTagName("tr");
+    const tbody = table.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const defaultRowOrder = rows.map(row => row.dataset.driverKey);
+    const rowByKey = new Map(rows.map(row => [row.dataset.driverKey, row]));
+    const panelSubtitle = document.getElementById("panelSubtitle");
+    const defaultPanelSubtitle = panelSubtitle ? panelSubtitle.textContent.trim() : "";
+    const suggestionsList = document.getElementById("addressSuggestions");
+    const nearestAddressInput = document.getElementById("nearestAddressInput");
+    const nearestSearchBtn = document.getElementById("nearestSearchBtn");
+    const nearestClearBtn = document.getElementById("nearestClearBtn");
+    const nearestStatus = document.getElementById("nearestStatus");
+    const suggestionTimers = {};
 
     searchInput.addEventListener("keyup", function () {
         const filter = searchInput.value.toLowerCase();
-        for (let i = 1; i < rows.length; i++) {
-            const rowText = rows[i].innerText.toLowerCase();
-            rows[i].style.display = rowText.includes(filter) ? "" : "none";
-        }
+        rows.forEach(row => {
+            const rowText = row.innerText.toLowerCase();
+            row.style.display = rowText.includes(filter) ? "" : "none";
+        });
     });
 
     const layout = document.getElementById("layout");
@@ -1320,16 +1414,21 @@
         };
     }
 
-    function renderEtaStatus(driverKey, etaStatus) {
+    function renderEtaStatus(driverKey, etaStatus, etaDelayText) {
         const etaStatusCell = document.getElementById(`eta-status-${driverKey}`);
         if (!etaStatusCell) return;
 
         if (etaStatus === "LATE") {
-            etaStatusCell.innerHTML = '<span class="eta-late">LATE</span>';
+            const delayMarkup = etaDelayText
+                ? `<span class="eta-late eta-subtext">${etaDelayText}</span>`
+                : "";
+            etaStatusCell.innerHTML = `<span class="eta-late">LATE</span>${delayMarkup}`;
         } else if (etaStatus === "CLOSE") {
             etaStatusCell.innerHTML = '<span class="eta-close">CLOSE</span>';
         } else if (etaStatus === "ON TIME") {
             etaStatusCell.innerHTML = '<span class="eta-ontime">ON TIME</span>';
+        } else if (etaStatus === "ERROR") {
+            etaStatusCell.innerHTML = '<span class="eta-late">ROUTE ERROR</span>';
         } else {
             etaStatusCell.innerHTML = '<span class="eta-empty">—</span>';
         }
@@ -1345,6 +1444,136 @@
             etaCell.innerHTML = '<span class="eta-empty">—</span>';
         }
     }
+
+    function renderDistance(driverKey, distanceValue) {
+        const milesInput = document.querySelector(`.miles-input[data-driver-key="${driverKey}"]`);
+        if (!milesInput) return;
+        milesInput.value = distanceValue || "";
+    }
+
+    function updateSuggestionOptions(suggestions) {
+        suggestionsList.innerHTML = suggestions
+            .map(item => `<option value="${item.label.replace(/"/g, "&quot;")}"></option>`)
+            .join("");
+    }
+
+    function fetchAddressSuggestions(value) {
+        if (!value || value.trim().length < 3) {
+            suggestionsList.innerHTML = "";
+            return;
+        }
+
+        fetch(`/address-suggest?q=${encodeURIComponent(value.trim())}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    updateSuggestionOptions(result.suggestions || []);
+                }
+            })
+            .catch(() => {
+                suggestionsList.innerHTML = "";
+            });
+    }
+
+    document.querySelectorAll(".address-autocomplete").forEach(input => {
+        input.addEventListener("input", function () {
+            const key = this.dataset.driverKey || this.id || "global";
+            clearTimeout(suggestionTimers[key]);
+            suggestionTimers[key] = setTimeout(() => {
+                fetchAddressSuggestions(this.value);
+            }, 250);
+        });
+    });
+
+    function clearNearestMeta() {
+        rows.forEach(row => {
+            const meta = document.getElementById(`nearest-meta-${row.dataset.driverKey}`);
+            if (meta) {
+                meta.textContent = "";
+            }
+        });
+    }
+
+    function restoreDefaultRowOrder() {
+        defaultRowOrder.forEach(driverKey => {
+            const row = rowByKey.get(driverKey);
+            if (row) {
+                tbody.appendChild(row);
+            }
+        });
+    }
+
+    function renderNearestMatches(address, matches) {
+        const matchedMap = new Map(matches.map(match => [match.driver_key, match]));
+        const orderedKeys = matches.map(match => match.driver_key);
+
+        rows
+            .filter(row => !matchedMap.has(row.dataset.driverKey))
+            .sort((a, b) => defaultRowOrder.indexOf(a.dataset.driverKey) - defaultRowOrder.indexOf(b.dataset.driverKey))
+            .forEach(row => orderedKeys.push(row.dataset.driverKey));
+
+        orderedKeys.forEach(driverKey => {
+            const row = rowByKey.get(driverKey);
+            if (row) {
+                tbody.appendChild(row);
+            }
+        });
+
+        clearNearestMeta();
+
+        matches.forEach(match => {
+            const meta = document.getElementById(`nearest-meta-${match.driver_key}`);
+            if (!meta) return;
+            meta.textContent = `${match.distance_miles} mi away · ${match.duration_minutes} min`;
+        });
+
+        if (panelSubtitle) {
+            panelSubtitle.textContent = `Sorted by nearest to ${address}`;
+        }
+        nearestStatus.textContent = `Sorted ${matches.length} drivers by nearest distance to ${address}`;
+    }
+
+    function clearNearestSearch() {
+        nearestAddressInput.value = "";
+        clearNearestMeta();
+        restoreDefaultRowOrder();
+        if (panelSubtitle) {
+            panelSubtitle.textContent = defaultPanelSubtitle;
+        }
+        nearestStatus.textContent = "";
+    }
+
+    function runNearestSearch() {
+        const address = nearestAddressInput.value.trim();
+        if (!address) {
+            nearestStatus.textContent = "Enter an address first.";
+            return;
+        }
+
+        nearestStatus.textContent = "Finding nearest drivers...";
+
+        fetch(`/nearest-drivers?address=${encodeURIComponent(address)}`)
+            .then(response => response.json())
+            .then(result => {
+                if (!result.success) {
+                    nearestStatus.textContent = result.error || "Address lookup failed.";
+                    return;
+                }
+                renderNearestMatches(address, result.matches || []);
+            })
+            .catch(() => {
+                nearestStatus.textContent = "Address lookup failed.";
+            });
+    }
+
+    nearestSearchBtn.addEventListener("click", runNearestSearch);
+    nearestClearBtn.addEventListener("click", clearNearestSearch);
+    nearestAddressInput.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            runNearestSearch();
+        }
+    });
 
     function autosaveDriver(driverKey) {
         const rowData = getRowData(driverKey);
@@ -1363,7 +1592,8 @@
         .then(result => {
             if (result.success) {
                 renderEta(driverKey, result.eta);
-                renderEtaStatus(driverKey, result.eta_status);
+                renderEtaStatus(driverKey, result.eta_status, result.eta_delay_text);
+                renderDistance(driverKey, result.distance_miles);
                 setSaveStatus(driverKey, "Saved", "saved");
 
                 setTimeout(() => {

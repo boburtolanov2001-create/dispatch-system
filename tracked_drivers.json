@@ -5,16 +5,18 @@
     "location": "17mi SSE from Cushing, OK",
     "vehicle": "930",
     "minutes": 0,
-    "delivery_address": "Hinkley, CA",
-    "appt_time": "2026-03-23T08:33",
-    "eta": "03/23 04:11 AM",
-    "eta_status": "ON TIME",
-    "distance_miles": "1298",
+    "delivery_address": "Dallas, TX",
+    "appt_time": "2026-03-29T08:00",
+    "eta": "",
+    "eta_status": "",
+    "distance_miles": "",
     "notes": "",
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Celestine Charles Joseph Gary": {
     "name": "Celestine Charles Joseph Gary",
@@ -31,7 +33,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Michel Carlos": {
     "name": "Michel Carlos",
@@ -48,7 +52,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "John Latwain Patton": {
     "name": "John Latwain Patton",
@@ -65,7 +71,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Foster Richard": {
     "name": "Foster Richard",
@@ -82,7 +90,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Christoyua Elizabeth Gibbs": {
     "name": "Christoyua Elizabeth Gibbs",
@@ -99,7 +109,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Tresilus Jean N": {
     "name": "Tresilus Jean N",
@@ -116,7 +128,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Smith Adrian Jay": {
     "name": "Smith Adrian Jay",
@@ -133,7 +147,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Mourad Benfaida": {
     "name": "Mourad Benfaida",
@@ -150,7 +166,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Mhamed Amine Bassimi": {
     "name": "Mhamed Amine Bassimi",
@@ -167,7 +185,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Joel Simon": {
     "name": "Joel Simon",
@@ -184,7 +204,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Abel Padron Morales": {
     "name": "Abel Padron Morales",
@@ -201,7 +223,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Leyva Sanchez Leonardo": {
     "name": "Leyva Sanchez Leonardo",
@@ -218,7 +242,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Pullum Ledarrius Deangelo": {
     "name": "Pullum Ledarrius Deangelo",
@@ -235,7 +261,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Douglas Anton Stafford": {
     "name": "Douglas Anton Stafford",
@@ -252,7 +280,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Valestin Mackenson": {
     "name": "Valestin Mackenson",
@@ -269,7 +299,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Earl Fleming Street": {
     "name": "Earl Fleming Street",
@@ -286,7 +318,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Wade Clayon Yuri": {
     "name": "Wade Clayon Yuri",
@@ -303,7 +337,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Soe Han Nyein": {
     "name": "Soe Han Nyein",
@@ -320,7 +356,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Gildersleeve Rodney Dewayne": {
     "name": "Gildersleeve Rodney Dewayne",
@@ -337,7 +375,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Miller David Jerod": {
     "name": "Miller David Jerod",
@@ -354,7 +394,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Zafarjon Ganiev": {
     "name": "Zafarjon Ganiev",
@@ -371,7 +413,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Williams Veronica Latrice": {
     "name": "Williams Veronica Latrice",
@@ -388,7 +432,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Jose Luis Hernandez": {
     "name": "Jose Luis Hernandez",
@@ -405,7 +451,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Ndum Dickson Muyah": {
     "name": "Ndum Dickson Muyah",
@@ -422,7 +470,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Corey Sherrod Sampson": {
     "name": "Corey Sherrod Sampson",
@@ -439,7 +489,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Watt Sherrod Jake": {
     "name": "Watt Sherrod Jake",
@@ -456,7 +508,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Carlos Sanchez Morales": {
     "name": "Carlos Sanchez Morales",
@@ -473,7 +527,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Bridges Derrell Joseph": {
     "name": "Bridges Derrell Joseph",
@@ -490,7 +546,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Noor Zuheir Homos": {
     "name": "Noor Zuheir Homos",
@@ -507,7 +565,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Khalaf Sarmad Hadi": {
     "name": "Khalaf Sarmad Hadi",
@@ -524,7 +584,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Weldon Imam Walker": {
     "name": "Weldon Imam Walker",
@@ -541,7 +603,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Gibson Kenneth": {
     "name": "Gibson Kenneth",
@@ -558,7 +622,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Frunza Costel": {
     "name": "Frunza Costel",
@@ -575,7 +641,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Ajibew Binyam Seyfe": {
     "name": "Ajibew Binyam Seyfe",
@@ -592,7 +660,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Serge Loiseau": {
     "name": "Serge Loiseau",
@@ -609,7 +679,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Olibrice Emerveson": {
     "name": "Olibrice Emerveson",
@@ -626,7 +698,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Franklin Landron Mejia": {
     "name": "Franklin Landron Mejia",
@@ -643,7 +717,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Jean Gardy Fleurissaint": {
     "name": "Jean Gardy Fleurissaint",
@@ -660,7 +736,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Corey Cousar": {
     "name": "Corey Cousar",
@@ -677,7 +755,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Brahim Khalil Ahmiche": {
     "name": "Brahim Khalil Ahmiche",
@@ -694,7 +774,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Leopoldo Domingo Demetrius Asturias": {
     "name": "Leopoldo Domingo Demetrius Asturias",
@@ -711,7 +793,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Saul Girard": {
     "name": "Saul Girard",
@@ -728,7 +812,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Dayilon Marquarius Blanson": {
     "name": "Dayilon Marquarius Blanson",
@@ -745,7 +831,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Desislav Stefanov Baklarov": {
     "name": "Desislav Stefanov Baklarov",
@@ -762,7 +850,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Hampton John Edward": {
     "name": "Hampton John Edward",
@@ -779,7 +869,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Abdel Rahman Mohammad Alomari": {
     "name": "Abdel Rahman Mohammad Alomari",
@@ -796,7 +888,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Amin Lahnini": {
     "name": "Amin Lahnini",
@@ -813,7 +907,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Damien Andre Durden": {
     "name": "Damien Andre Durden",
@@ -830,7 +926,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Poteat Timothy A": {
     "name": "Poteat Timothy A",
@@ -847,7 +945,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "ALLEN HEARD": {
     "name": "ALLEN HEARD",
@@ -864,7 +964,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Kelton Todd": {
     "name": "Kelton Todd",
@@ -881,7 +983,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Ibrahim Yakob Habib": {
     "name": "Ibrahim Yakob Habib",
@@ -898,7 +1002,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Wallace Kenneth JR": {
     "name": "Wallace Kenneth JR",
@@ -915,7 +1021,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Gray Dave L": {
     "name": "Gray Dave L",
@@ -932,7 +1040,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Raycharles Lazarus Lugo": {
     "name": "Raycharles Lazarus Lugo",
@@ -949,7 +1059,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Valentine St Clair Williams": {
     "name": "Valentine St Clair Williams",
@@ -966,7 +1078,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Jovan Romario Jordon Phillips": {
     "name": "Jovan Romario Jordon Phillips",
@@ -983,7 +1097,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Jamal Casimir": {
     "name": "Jamal Casimir",
@@ -1000,7 +1116,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Otoigo Thadeus Juma": {
     "name": "Otoigo Thadeus Juma",
@@ -1017,7 +1135,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Smith Tyron": {
     "name": "Smith Tyron",
@@ -1034,7 +1154,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Langford Kentrell Lowery": {
     "name": "Langford Kentrell Lowery",
@@ -1051,7 +1173,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "West Landris Demetrius": {
     "name": "West Landris Demetrius",
@@ -1068,7 +1192,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Oliver Brent Darren JR": {
     "name": "Oliver Brent Darren JR",
@@ -1085,7 +1211,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Luis Ramon Casellas": {
     "name": "Luis Ramon Casellas",
@@ -1102,7 +1230,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Erika Marie Ignaut": {
     "name": "Erika Marie Ignaut",
@@ -1119,7 +1249,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Gill Ronald Brian": {
     "name": "Gill Ronald Brian",
@@ -1136,7 +1268,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Darlene Reese": {
     "name": "Darlene Reese",
@@ -1153,7 +1287,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Daniels Randy Kreshaie": {
     "name": "Daniels Randy Kreshaie",
@@ -1170,7 +1306,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Calloway Christopher Mccants": {
     "name": "Calloway Christopher Mccants",
@@ -1187,7 +1325,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Voltaire James Wood": {
     "name": "Voltaire James Wood",
@@ -1204,7 +1344,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Abdul Rouwf": {
     "name": "Abdul Rouwf",
@@ -1221,7 +1363,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "PAULISAINT PRESMIR JR": {
     "name": "PAULISAINT PRESMIR JR",
@@ -1238,7 +1382,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Bakhtiyor Kakhramon UG Ganiev": {
     "name": "Bakhtiyor Kakhramon UG Ganiev",
@@ -1255,7 +1401,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Kongkeo Nhangphayboun": {
     "name": "Kongkeo Nhangphayboun",
@@ -1272,7 +1420,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Senasa Gurmesa Keneni": {
     "name": "Senasa Gurmesa Keneni",
@@ -1289,7 +1439,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Bruno Kenji": {
     "name": "Bruno Kenji",
@@ -1306,7 +1458,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Davis Paul": {
     "name": "Davis Paul",
@@ -1323,7 +1477,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Wilsan Yusuf Ibrahim": {
     "name": "Wilsan Yusuf Ibrahim",
@@ -1340,7 +1496,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Dawt P Ceu": {
     "name": "Dawt P Ceu",
@@ -1357,7 +1515,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Davis Christopher Jerod": {
     "name": "Davis Christopher Jerod",
@@ -1374,7 +1534,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Hicham Ahmiche": {
     "name": "Hicham Ahmiche",
@@ -1391,7 +1553,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Rehman Abdul": {
     "name": "Rehman Abdul",
@@ -1408,7 +1572,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Rachid Mjadli": {
     "name": "Rachid Mjadli",
@@ -1425,7 +1591,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Kenneth Ray Gaines": {
     "name": "Kenneth Ray Gaines",
@@ -1442,7 +1610,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Abbas Alajeeli Qasem Hamzah": {
     "name": "Abbas Alajeeli Qasem Hamzah",
@@ -1459,7 +1629,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Khadim Diop": {
     "name": "Khadim Diop",
@@ -1476,7 +1648,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Bell Claude Dean": {
     "name": "Bell Claude Dean",
@@ -1493,7 +1667,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Algaddal Montasir": {
     "name": "Algaddal Montasir",
@@ -1510,7 +1686,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Hashim Shalo Kakozi": {
     "name": "Hashim Shalo Kakozi",
@@ -1527,7 +1705,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Tazul Islam": {
     "name": "Tazul Islam",
@@ -1544,7 +1724,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Mohammed Obsa Jemal": {
     "name": "Mohammed Obsa Jemal",
@@ -1561,7 +1743,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Habib Ahmed": {
     "name": "Habib Ahmed",
@@ -1578,7 +1762,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Luis Alberto Alvarez Robledo": {
     "name": "Luis Alberto Alvarez Robledo",
@@ -1595,7 +1781,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Trowers Daniel Edgar": {
     "name": "Trowers Daniel Edgar",
@@ -1612,7 +1800,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Armand Trenol Hamilton": {
     "name": "Armand Trenol Hamilton",
@@ -1629,7 +1819,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Tremon Deshon Pope": {
     "name": "Tremon Deshon Pope",
@@ -1646,7 +1838,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Moalim Ibrahim Abdi": {
     "name": "Moalim Ibrahim Abdi",
@@ -1663,7 +1857,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "LAKES MAVARIES": {
     "name": "LAKES MAVARIES",
@@ -1680,7 +1876,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Eddie D Griffin": {
     "name": "Eddie D Griffin",
@@ -1697,7 +1895,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Berthony Pierre": {
     "name": "Berthony Pierre",
@@ -1714,7 +1914,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Semore Clarke": {
     "name": "Semore Clarke",
@@ -1731,7 +1933,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "PAOLI JACQUVIS": {
     "name": "PAOLI JACQUVIS",
@@ -1748,7 +1952,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Jose Velazquez": {
     "name": "Jose Velazquez",
@@ -1765,7 +1971,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Horneck Tyrone Harris": {
     "name": "Horneck Tyrone Harris",
@@ -1782,7 +1990,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Hill Isaiah Jr": {
     "name": "Hill Isaiah Jr",
@@ -1799,7 +2009,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Elizabeth Maria Casellas": {
     "name": "Elizabeth Maria Casellas",
@@ -1816,7 +2028,9 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   },
   "Cheatham Tarell Lamar": {
     "name": "Cheatham Tarell Lamar",
@@ -1833,6 +2047,8 @@
     "alerted": false,
     "dispatch_status": "",
     "assigned_to": "",
-    "source": "safe_lane"
+    "source": "safe_lane",
+    "eta_delay_minutes": 0,
+    "eta_delay_text": ""
   }
 }
