@@ -1,0 +1,16 @@
+[Unit]
+Description=Dispatch System Flask App
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/root/dispatch-system
+Environment=PYTHONUNBUFFERED=1
+Environment=FLASK_APP=app.py
+ExecStart=/root/dispatch-system/.venv/bin/flask run --host 0.0.0.0 --port 5000 --no-debugger --no-reload
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,53 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile Check
+        run: python -m py_compile app.py
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.SERVER_PORT }}" -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync code to server
+        run: |
+          rsync -az --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '.idea/' \
+            --exclude '.venv/' \
+            --exclude '__pycache__/' \
+            --exclude 'tracked_drivers.json' \
+            --exclude 'user_assignments.json' \
+            --exclude 'users.json' \
+            --exclude 'geo_cache.json' \
+            -e "ssh -p ${{ secrets.SERVER_PORT }}" \
+            ./ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+
+      - name: Run remote deploy script
+        run: |
+          ssh -p "${{ secrets.SERVER_PORT }}" "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "chmod +x '${{ secrets.DEPLOY_PATH }}/scripts/deploy_remote.sh' && '${{ secrets.DEPLOY_PATH }}/scripts/deploy_remote.sh' '${{ secrets.DEPLOY_PATH }}' '${{ secrets.APP_SERVICE_NAME }}'"
