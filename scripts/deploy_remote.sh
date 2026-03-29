@@ -6,6 +6,10 @@ SERVICE_NAME="${2:?service name is required}"
 
 cd "$APP_DIR"
 
+if [ -d ".venv" ] && { [ ! -x ".venv/bin/python" ] || [ ! -x ".venv/bin/pip" ]; }; then
+  rm -rf .venv
+fi
+
 if [ ! -d ".venv" ]; then
   if ! python3 -m venv --help >/dev/null 2>&1; then
     if command -v apt-get >/dev/null 2>&1; then
@@ -18,6 +22,10 @@ if [ ! -d ".venv" ]; then
     fi
   fi
   python3 -m venv .venv
+fi
+
+if [ ! -x ".venv/bin/pip" ]; then
+  .venv/bin/python -m ensurepip --upgrade
 fi
 
 .venv/bin/pip install --upgrade pip
