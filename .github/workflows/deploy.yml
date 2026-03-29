@@ -22,10 +22,11 @@ jobs:
       - name: Compile Check
         run: python -m py_compile app.py
 
-      - name: Start SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+      - name: Configure SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "${{ secrets.SERVER_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
 
       - name: Add server to known_hosts
         run: |
@@ -44,10 +45,10 @@ jobs:
             --exclude 'user_assignments.json' \
             --exclude 'users.json' \
             --exclude 'geo_cache.json' \
-            -e "ssh -p ${{ secrets.SERVER_PORT }}" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SERVER_PORT }} -o IdentitiesOnly=yes" \
             ./ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_PATH }}/"
 
       - name: Run remote deploy script
         run: |
-          ssh -p "${{ secrets.SERVER_PORT }}" "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+          ssh -i ~/.ssh/deploy_key -p "${{ secrets.SERVER_PORT }}" -o IdentitiesOnly=yes "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
             "chmod +x '${{ secrets.DEPLOY_PATH }}/scripts/deploy_remote.sh' && '${{ secrets.DEPLOY_PATH }}/scripts/deploy_remote.sh' '${{ secrets.DEPLOY_PATH }}' '${{ secrets.APP_SERVICE_NAME }}'"
