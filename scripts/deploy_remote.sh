@@ -7,6 +7,16 @@ SERVICE_NAME="${2:?service name is required}"
 cd "$APP_DIR"
 
 if [ ! -d ".venv" ]; then
+  if ! python3 -m venv --help >/dev/null 2>&1; then
+    if command -v apt-get >/dev/null 2>&1; then
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y python3-venv
+    else
+      echo "python3-venv is required to create .venv"
+      exit 1
+    fi
+  fi
   python3 -m venv .venv
 fi
 
