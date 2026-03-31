@@ -68,8 +68,11 @@ def load_data():
     if not os.path.exists(JSON_FILE):
         return {}
 
-    with open(JSON_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    try:
+        with open(JSON_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
 
     if isinstance(data, list):
         normalized = {}
