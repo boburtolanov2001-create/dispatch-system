@@ -14,6 +14,23 @@ On every push to `main`, GitHub Actions will:
 6. install/update Python dependencies on the server
 7. restart the systemd service
 
+## PostgreSQL
+
+This app now stores mutable state in PostgreSQL when `DATABASE_URL` is set.
+
+Data moved to DB:
+
+- login users
+- driver assignments for `My Drivers`
+- delivery address
+- APPT
+- ETA
+- ETA status
+- ETA delay
+- notes
+
+The live driver feed can still be imported from `tracked_drivers.json`, and the app syncs that feed into PostgreSQL-backed views at runtime.
+
 ## GitHub secrets to add
 
 Add these repository secrets in GitHub:
@@ -56,6 +73,17 @@ sudo systemctl daemon-reload
 sudo systemctl enable dispatch-system
 sudo systemctl start dispatch-system
 ```
+
+Create `/root/dispatch-system/.env` on the server:
+
+```bash
+cat >/root/dispatch-system/.env <<'EOF'
+DATABASE_URL=postgresql://dispatch_user:change_me@127.0.0.1:5432/dispatch_system
+EOF
+chmod 600 /root/dispatch-system/.env
+```
+
+You can use `.env.example` in the repo as the template.
 
 ## SSH authentication
 

@@ -6,13 +6,21 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode, quote
 from urllib.request import Request, urlopen
 
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+except ImportError:  # pragma: no cover
+    psycopg = None
+    dict_row = None
+
 app = Flask(__name__)
 app.secret_key = "super_secret_key"
-LOGIN_FILE = "users.json"
 
+LOGIN_FILE = "users.json"
 JSON_FILE = "tracked_drivers.json"
 USERS_FILE = "user_assignments.json"
 GEOCODE_CACHE_FILE = "geo_cache.json"
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 OSRM_ROUTE_URL = "https://router.project-osrm.org/route/v1/driving"
@@ -20,6 +28,40 @@ OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving"
 HTTP_HEADERS = {
     "User-Agent": "dispatch-system/1.0 (+dispatch-dashboard)"
 }
+
+DB_INIT_DONE = False
+
+
+def db_enabled():
+    return bool(DATABASE_URL)
+
+
+def require_db_driver():
+    if not psycopg:
+        raise RuntimeError("DATABASE_URL is set but psycopg is not installed.")
+
+
+def connect_db():
+    require_db_driver()
+    return psycopg.connect(DATABASE_URL, row_factory=dict_row)
+
+
+def load_json_file(path, default):
+    if not os.path.exists(path):
+        return default
+
+    with open(path, "r", encoding="utf-8") as file_obj:
+        return json.load(file_obj)
+
+
+def load_login_users_file():
+    data = load_json_file(LOGIN_FILE, {})
+    return data if isinstance(data, dict) else {}
+
+
+def load_users_file():
+    data = load_json_file(USERS_FILE, {})
+    return data if isinstance(data, dict) else {}
 
 
 def load_data():
@@ -63,6 +105,7 @@ def load_data():
         driver.setdefault("status", "")
         driver.setdefault("name", "")
         driver.setdefault("vehicle", "")
+        driver.setdefault("source", "")
 
     return data
 
@@ -72,39 +115,9 @@ def save_data(data):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-def load_users():
-    if not os.path.exists(USERS_FILE):
-        default_users = {
-            "Bobur": [],
-            "dispatcher1": [],
-            "dispatcher2": []
-        }
-        save_users(default_users)
-        return default_users
-
-    with open(USERS_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def save_users(users):
-    with open(USERS_FILE, "w", encoding="utf-8") as f:
-        json.dump(users, f, indent=2, ensure_ascii=False)
-
-
-def load_login_users():
-    if not os.path.exists(LOGIN_FILE):
-        return {}
-
-    with open(LOGIN_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
 def load_geo_cache():
-    if not os.path.exists(GEOCODE_CACHE_FILE):
-        return {}
-
-    with open(GEOCODE_CACHE_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    data = load_json_file(GEOCODE_CACHE_FILE, {})
+    return data if isinstance(data, dict) else {}
 
 
 def save_geo_cache(cache):
@@ -148,7 +161,10 @@ def parse_appt_time(appt_time_raw):
     if not appt_time_raw:
         return None
 
-    appt_time_raw = appt_time_raw.strip()
+    if isinstance(appt_time_raw, datetime):
+        return appt_time_raw
+
+    appt_time_raw = str(appt_time_raw).strip()
     formats = [
         "%Y-%m-%dT%H:%M",
         "%Y-%m-%d %H:%M",
@@ -168,6 +184,14 @@ def format_eta(dt_obj):
     if not dt_obj:
         return ""
     return dt_obj.strftime("%m/%d %I:%M %p")
+
+
+def format_appt_value(dt_obj):
+    if not dt_obj:
+        return ""
+    if isinstance(dt_obj, datetime):
+        return dt_obj.strftime("%Y-%m-%dT%H:%M")
+    return str(dt_obj)
 
 
 def format_delay_text(diff_minutes):
@@ -415,7 +439,415 @@ def build_route_eta(driver_location, delivery_address):
     }
 
 
-def build_drivers():
+def ensure_db_ready():
+    global DB_INIT_DONE
+
+    if DB_INIT_DONE or not db_enabled():
+        return
+
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS app_users (
+                    username TEXT PRIMARY KEY,
+                    password TEXT NOT NULL DEFAULT '',
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS driver_feed (
+                    driver_key TEXT PRIMARY KEY,
+                    name TEXT NOT NULL DEFAULT '',
+                    status TEXT NOT NULL DEFAULT '',
+                    location TEXT NOT NULL DEFAULT '',
+                    vehicle TEXT NOT NULL DEFAULT '',
+                    minutes INTEGER NOT NULL DEFAULT 0,
+                    alerted BOOLEAN NOT NULL DEFAULT FALSE,
+                    dispatch_status TEXT NOT NULL DEFAULT '',
+                    assigned_to TEXT NOT NULL DEFAULT '',
+                    source TEXT NOT NULL DEFAULT '',
+                    synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS user_driver_assignments (
+                    username TEXT NOT NULL REFERENCES app_users(username) ON DELETE CASCADE,
+                    driver_key TEXT NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    PRIMARY KEY (username, driver_key)
+                )
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS driver_dispatch_state (
+                    driver_key TEXT PRIMARY KEY,
+                    delivery_address TEXT NOT NULL DEFAULT '',
+                    appt_time TIMESTAMP NULL,
+                    eta TEXT NOT NULL DEFAULT '',
+                    eta_status TEXT NOT NULL DEFAULT '',
+                    eta_delay_minutes INTEGER NOT NULL DEFAULT 0,
+                    eta_delay_text TEXT NOT NULL DEFAULT '',
+                    distance_miles TEXT NOT NULL DEFAULT '',
+                    notes TEXT NOT NULL DEFAULT '',
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+
+            seed_db_from_files(conn)
+        conn.commit()
+
+    DB_INIT_DONE = True
+
+
+def seed_db_from_files(conn):
+    login_users = load_login_users_file()
+    assignments = load_users_file()
+    raw_drivers = load_data()
+
+    with conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) AS count FROM app_users")
+        user_count = cur.fetchone()["count"]
+        if user_count == 0:
+            for username, password in login_users.items():
+                cur.execute(
+                    """
+                    INSERT INTO app_users (username, password)
+                    VALUES (%s, %s)
+                    ON CONFLICT (username) DO NOTHING
+                    """,
+                    (str(username).strip(), str(password)),
+                )
+
+        cur.execute("SELECT COUNT(*) AS count FROM user_driver_assignments")
+        assignment_count = cur.fetchone()["count"]
+        if assignment_count == 0:
+            for username, driver_keys in assignments.items():
+                normalized_username = str(username).strip()
+                cur.execute(
+                    """
+                    INSERT INTO app_users (username, password)
+                    VALUES (%s, %s)
+                    ON CONFLICT (username) DO NOTHING
+                    """,
+                    (normalized_username, str(login_users.get(normalized_username, ""))),
+                )
+                for driver_key in driver_keys or []:
+                    cur.execute(
+                        """
+                        INSERT INTO user_driver_assignments (username, driver_key)
+                        VALUES (%s, %s)
+                        ON CONFLICT (username, driver_key) DO NOTHING
+                        """,
+                        (normalized_username, str(driver_key).strip()),
+                    )
+
+        cur.execute("SELECT COUNT(*) AS count FROM driver_dispatch_state")
+        state_count = cur.fetchone()["count"]
+        if state_count == 0:
+            for driver_key, driver in raw_drivers.items():
+                if not isinstance(driver, dict):
+                    continue
+                cur.execute(
+                    """
+                    INSERT INTO driver_dispatch_state (
+                        driver_key, delivery_address, appt_time, eta, eta_status,
+                        eta_delay_minutes, eta_delay_text, distance_miles, notes
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (driver_key) DO NOTHING
+                    """,
+                    (
+                        str(driver_key).strip(),
+                        str(driver.get("delivery_address", "")),
+                        parse_appt_time(driver.get("appt_time", "")),
+                        str(driver.get("eta", "")),
+                        str(driver.get("eta_status", "")),
+                        int(driver.get("eta_delay_minutes", 0) or 0),
+                        str(driver.get("eta_delay_text", "")),
+                        str(driver.get("distance_miles", "")),
+                        str(driver.get("notes", "")),
+                    ),
+                )
+
+    sync_driver_feed_to_db(conn, raw_drivers, prune_missing=False)
+
+
+def sync_driver_feed_to_db(conn, raw_data, prune_missing=True):
+    current_keys = []
+
+    with conn.cursor() as cur:
+        for raw_key, driver in raw_data.items():
+            if not isinstance(driver, dict):
+                continue
+
+            driver_key = str(raw_key).strip()
+            if not driver_key:
+                continue
+
+            current_keys.append(driver_key)
+            cur.execute(
+                """
+                INSERT INTO driver_feed (
+                    driver_key, name, status, location, vehicle, minutes,
+                    alerted, dispatch_status, assigned_to, source, synced_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (driver_key) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    status = EXCLUDED.status,
+                    location = EXCLUDED.location,
+                    vehicle = EXCLUDED.vehicle,
+                    minutes = EXCLUDED.minutes,
+                    alerted = EXCLUDED.alerted,
+                    dispatch_status = EXCLUDED.dispatch_status,
+                    assigned_to = EXCLUDED.assigned_to,
+                    source = EXCLUDED.source,
+                    synced_at = NOW()
+                """,
+                (
+                    driver_key,
+                    str(driver.get("name", "")),
+                    str(driver.get("status", "")),
+                    str(driver.get("location", "")),
+                    str(driver.get("vehicle", "")),
+                    int(driver.get("minutes", 0) or 0),
+                    bool(driver.get("alerted", False)),
+                    str(driver.get("dispatch_status", "")),
+                    str(driver.get("assigned_to", "")),
+                    str(driver.get("source", "")),
+                ),
+            )
+
+        if prune_missing:
+            if current_keys:
+                cur.execute(
+                    "DELETE FROM driver_feed WHERE NOT (driver_key = ANY(%s))",
+                    (current_keys,),
+                )
+            else:
+                cur.execute("DELETE FROM driver_feed")
+
+
+def get_login_users():
+    if not db_enabled():
+        return load_login_users_file()
+
+    ensure_db_ready()
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT username, password FROM app_users ORDER BY username")
+            return {row["username"]: row["password"] for row in cur.fetchall()}
+
+
+def get_assignment_map():
+    if not db_enabled():
+        return load_users_file()
+
+    ensure_db_ready()
+    assignments = {}
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT username FROM app_users ORDER BY username")
+            for row in cur.fetchall():
+                assignments[row["username"]] = []
+
+            cur.execute(
+                """
+                SELECT username, driver_key
+                FROM user_driver_assignments
+                ORDER BY username, driver_key
+                """
+            )
+            for row in cur.fetchall():
+                assignments.setdefault(row["username"], []).append(row["driver_key"])
+
+    return assignments
+
+
+def get_assigned_keys(username):
+    if not db_enabled():
+        return set(load_users_file().get(username, []))
+
+    ensure_db_ready()
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT driver_key
+                FROM user_driver_assignments
+                WHERE username = %s
+                """,
+                (username,),
+            )
+            return {row["driver_key"] for row in cur.fetchall()}
+
+
+def add_assignment(username, driver_key):
+    if not db_enabled():
+        users = load_users_file()
+        users.setdefault(username, [])
+        if driver_key not in users[username]:
+            users[username].append(driver_key)
+            with open(USERS_FILE, "w", encoding="utf-8") as f:
+                json.dump(users, f, indent=2, ensure_ascii=False)
+        return
+
+    ensure_db_ready()
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO user_driver_assignments (username, driver_key)
+                VALUES (%s, %s)
+                ON CONFLICT (username, driver_key) DO NOTHING
+                """,
+                (username, driver_key),
+            )
+        conn.commit()
+
+
+def remove_assignment(username, driver_key):
+    if not db_enabled():
+        users = load_users_file()
+        users.setdefault(username, [])
+        if driver_key in users[username]:
+            users[username].remove(driver_key)
+            with open(USERS_FILE, "w", encoding="utf-8") as f:
+                json.dump(users, f, indent=2, ensure_ascii=False)
+        return
+
+    ensure_db_ready()
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                DELETE FROM user_driver_assignments
+                WHERE username = %s AND driver_key = %s
+                """,
+                (username, driver_key),
+            )
+        conn.commit()
+
+
+def upsert_dispatch_state(driver_key, state):
+    if not db_enabled():
+        data = load_data()
+        driver = data.setdefault(driver_key, {})
+        driver.update(state)
+        save_data(data)
+        return
+
+    ensure_db_ready()
+    with connect_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO driver_dispatch_state (
+                    driver_key, delivery_address, appt_time, eta, eta_status,
+                    eta_delay_minutes, eta_delay_text, distance_miles, notes, updated_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (driver_key) DO UPDATE SET
+                    delivery_address = EXCLUDED.delivery_address,
+                    appt_time = EXCLUDED.appt_time,
+                    eta = EXCLUDED.eta,
+                    eta_status = EXCLUDED.eta_status,
+                    eta_delay_minutes = EXCLUDED.eta_delay_minutes,
+                    eta_delay_text = EXCLUDED.eta_delay_text,
+                    distance_miles = EXCLUDED.distance_miles,
+                    notes = EXCLUDED.notes,
+                    updated_at = NOW()
+                """,
+                (
+                    driver_key,
+                    state["delivery_address"],
+                    state["appt_time"],
+                    state["eta"],
+                    state["eta_status"],
+                    state["eta_delay_minutes"],
+                    state["eta_delay_text"],
+                    state["distance_miles"],
+                    state["notes"],
+                ),
+            )
+        conn.commit()
+
+
+def get_driver_location(driver_key):
+    if not db_enabled():
+        return load_data().get(driver_key, {}).get("location", "")
+
+    ensure_db_ready()
+    raw_data = load_data()
+    with connect_db() as conn:
+        sync_driver_feed_to_db(conn, raw_data, prune_missing=True)
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT location FROM driver_feed WHERE driver_key = %s",
+                (driver_key,),
+            )
+            row = cur.fetchone()
+        conn.commit()
+    return row["location"] if row else ""
+
+
+def build_db_drivers():
+    ensure_db_ready()
+    raw_data = load_data()
+
+    with connect_db() as conn:
+        sync_driver_feed_to_db(conn, raw_data, prune_missing=True)
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    f.driver_key,
+                    f.name,
+                    f.status,
+                    f.location,
+                    f.vehicle,
+                    f.minutes,
+                    COALESCE(s.delivery_address, '') AS delivery_address,
+                    s.appt_time AS appt_time,
+                    COALESCE(s.eta, '') AS eta,
+                    COALESCE(s.eta_status, '') AS eta_status,
+                    COALESCE(s.eta_delay_minutes, 0) AS eta_delay_minutes,
+                    COALESCE(s.eta_delay_text, '') AS eta_delay_text,
+                    COALESCE(s.distance_miles, '') AS distance_miles,
+                    COALESCE(s.notes, '') AS notes,
+                    f.alerted,
+                    f.dispatch_status,
+                    f.assigned_to,
+                    f.source
+                FROM driver_feed f
+                LEFT JOIN driver_dispatch_state s
+                    ON s.driver_key = f.driver_key
+                ORDER BY f.name, f.driver_key
+                """
+            )
+            rows = cur.fetchall()
+        conn.commit()
+
+    drivers = []
+    for row in rows:
+        driver = dict(row)
+        driver["location"] = pretty_city_case(clean_location(driver.get("location", "")))
+        driver["vehicle"] = fallback_vehicle(driver["driver_key"], driver)
+        driver["appt_time"] = format_appt_value(driver.get("appt_time"))
+        driver["risk"] = get_risk(driver.get("status", ""), driver.get("minutes", 0))
+        drivers.append(driver)
+
+    return drivers
+
+
+def build_file_drivers():
     data = load_data()
     drivers = []
 
@@ -424,10 +856,17 @@ def build_drivers():
         driver["driver_key"] = key
         driver["location"] = pretty_city_case(clean_location(driver.get("location", "")))
         driver["vehicle"] = fallback_vehicle(key, driver)
+        driver["appt_time"] = format_appt_value(driver.get("appt_time"))
         driver["risk"] = get_risk(driver.get("status", ""), driver.get("minutes", 0))
         drivers.append(driver)
 
     return drivers
+
+
+def build_drivers():
+    if db_enabled():
+        return build_db_drivers()
+    return build_file_drivers()
 
 
 def find_nearest_matches(address, drivers):
@@ -494,7 +933,7 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
 
-        users = load_login_users()
+        users = get_login_users()
 
         if username in users and users[username] == password:
             session["user"] = username
@@ -524,14 +963,11 @@ def all_drivers():
         return redirect(url_for("login"))
 
     drivers = build_drivers()
-    users = load_users()
     selected_user = session["user"]
-    users.setdefault(selected_user, [])
 
     return render_template(
         "index.html",
         drivers=drivers,
-        users=users,
         selected_user=selected_user,
         current_page="all"
     )
@@ -542,18 +978,14 @@ def my_drivers():
     if not require_login():
         return redirect(url_for("login"))
 
-    users = load_users()
     selected_user = session["user"]
-    users.setdefault(selected_user, [])
-
-    assigned_keys = set(users.get(selected_user, []))
+    assigned_keys = get_assigned_keys(selected_user)
     all_data = build_drivers()
     drivers = [d for d in all_data if d["driver_key"] in assigned_keys]
 
     return render_template(
         "index.html",
         drivers=drivers,
-        users=users,
         selected_user=selected_user,
         current_page="my"
     )
@@ -564,10 +996,7 @@ def at_risk():
     if not require_login():
         return redirect(url_for("login"))
 
-    users = load_users()
     selected_user = session["user"]
-    users.setdefault(selected_user, [])
-
     drivers = build_drivers()
     risk_drivers = []
 
@@ -597,7 +1026,6 @@ def at_risk():
     return render_template(
         "index.html",
         drivers=risk_drivers,
-        users=users,
         selected_user=selected_user,
         current_page="risk"
     )
@@ -611,12 +1039,8 @@ def assign_driver():
     selected_user = session["user"]
     driver_key = request.form.get("driver_key", "").strip()
 
-    users = load_users()
-    users.setdefault(selected_user, [])
-
-    if driver_key and driver_key not in users[selected_user]:
-        users[selected_user].append(driver_key)
-        save_users(users)
+    if driver_key:
+        add_assignment(selected_user, driver_key)
 
     next_page = request.form.get("next_page", "all")
     if next_page == "risk":
@@ -632,12 +1056,8 @@ def remove_driver():
     selected_user = session["user"]
     driver_key = request.form.get("driver_key", "").strip()
 
-    users = load_users()
-    users.setdefault(selected_user, [])
-
-    if driver_key in users[selected_user]:
-        users[selected_user].remove(driver_key)
-        save_users(users)
+    if driver_key:
+        remove_assignment(selected_user, driver_key)
 
     return redirect(url_for("my_drivers"))
 
@@ -686,55 +1106,53 @@ def autosave():
     distance_input = request.form.get("distance_miles", "").strip()
     notes = request.form.get("notes", "").strip()
 
-    data = load_data()
-
-    if driver_key not in data:
+    current_location = get_driver_location(driver_key)
+    if not current_location:
         return jsonify({"success": False, "error": "Driver not found"}), 404
-
-    driver = data[driver_key]
-    driver["delivery_address"] = delivery_address
-    driver["appt_time"] = appt_time
-    driver["notes"] = notes
-    driver["eta"] = ""
-    driver["eta_status"] = ""
-    driver["eta_delay_minutes"] = 0
-    driver["eta_delay_text"] = ""
 
     appt_dt = parse_appt_time(appt_time)
     route_eta = None
+    eta = ""
+    eta_status = ""
+    eta_delay_text = ""
+    eta_delay_minutes = 0
+    distance_miles = distance_input
 
     if delivery_address:
-        route_eta = build_route_eta(driver.get("location", ""), delivery_address)
+        route_eta = build_route_eta(current_location, delivery_address)
 
     if route_eta:
-        driver["distance_miles"] = str(route_eta["distance_miles"])
-        driver["eta"] = route_eta["eta"]
+        distance_miles = str(route_eta["distance_miles"])
+        eta = route_eta["eta"]
         eta_status, eta_delay_text, eta_delay_minutes = get_eta_status(route_eta["eta_dt"], appt_dt)
-        driver["eta_status"] = eta_status
-        driver["eta_delay_text"] = eta_delay_text
-        driver["eta_delay_minutes"] = eta_delay_minutes
-    else:
-        driver["distance_miles"] = distance_input
-        if distance_input:
-            eta_dt, eta_str = simple_eta(distance_input)
-            if eta_dt:
-                driver["eta"] = eta_str
-                eta_status, eta_delay_text, eta_delay_minutes = get_eta_status(eta_dt, appt_dt)
-                driver["eta_status"] = eta_status
-                driver["eta_delay_text"] = eta_delay_text
-                driver["eta_delay_minutes"] = eta_delay_minutes
-            else:
-                driver["eta"] = "Invalid distance"
-                driver["eta_status"] = "ERROR"
+    elif distance_input:
+        eta_dt, eta = simple_eta(distance_input)
+        if eta_dt:
+            eta_status, eta_delay_text, eta_delay_minutes = get_eta_status(eta_dt, appt_dt)
+        else:
+            eta = "Invalid distance"
+            eta_status = "ERROR"
 
-    save_data(data)
+    upsert_dispatch_state(
+        driver_key,
+        {
+            "delivery_address": delivery_address,
+            "appt_time": appt_dt,
+            "eta": eta,
+            "eta_status": eta_status,
+            "eta_delay_minutes": eta_delay_minutes,
+            "eta_delay_text": eta_delay_text,
+            "distance_miles": distance_miles,
+            "notes": notes,
+        },
+    )
 
     return jsonify({
         "success": True,
-        "eta": driver["eta"],
-        "eta_status": driver["eta_status"],
-        "eta_delay_text": driver["eta_delay_text"],
-        "distance_miles": driver["distance_miles"],
+        "eta": eta,
+        "eta_status": eta_status,
+        "eta_delay_text": eta_delay_text,
+        "distance_miles": distance_miles,
         "route_used": bool(route_eta),
     })
 

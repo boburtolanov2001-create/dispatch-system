@@ -8,6 +8,7 @@ Group=root
 WorkingDirectory=/root/dispatch-system
 Environment=PYTHONUNBUFFERED=1
 Environment=FLASK_APP=app.py
+EnvironmentFile=-/root/dispatch-system/.env
 Environment=PATH=/root/dispatch-system/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=/root/dispatch-system/.venv/bin/flask run --host 0.0.0.0 --port 5001 --no-debugger --no-reload
 Restart=always
