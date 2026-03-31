@@ -475,6 +475,19 @@
             flex-wrap: wrap;
         }
 
+        .filters-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .filter-select,
+        .filter-input {
+            min-width: 180px;
+            flex: 1;
+        }
+
         .search-box input {
             height: 42px;
             padding: 0 14px;
@@ -1058,6 +1071,23 @@
             </div>
         </div>
 
+        <div class="filters-bar">
+            <select id="statusFilter" class="form-input filter-select">
+                <option value="">All Statuses</option>
+                <option value="DRIVING">Driving</option>
+                <option value="SLEEPER">Sleeper</option>
+                <option value="ON DUTY">On Duty</option>
+                <option value="OFF DUTY">Off Duty</option>
+            </select>
+            <input type="text" id="nameFilter" class="form-input filter-input" placeholder="Filter by driver name">
+            <input type="text" id="vehicleFilter" class="form-input filter-input" placeholder="Filter by vehicle">
+            <select id="violationFilter" class="form-input filter-select">
+                <option value="">All Violations</option>
+                <option value="yes">Has Violation</option>
+                <option value="no">No Violation</option>
+            </select>
+        </div>
+
         <div class="panel">
             <div class="panel-header">
                 <div class="panel-title">Live Driver List</div>
@@ -1093,7 +1123,12 @@
                         {% for d in drivers %}
                         {% set status_upper = d.status.upper() %}
 
-                        <tr class="row-{{ d.risk }}" data-driver-key="{{ d.driver_key }}">
+                        <tr class="row-{{ d.risk }}"
+                            data-driver-key="{{ d.driver_key }}"
+                            data-driver-name="{{ d.name|lower }}"
+                            data-driver-status="{{ d.status|upper }}"
+                            data-driver-vehicle="{{ d.vehicle|lower }}"
+                            data-has-violations="{{ 'yes' if d.has_violations else 'no' }}">
                             <td class="col-name" title="{{ d.name }}">
                                 <span class="driver-name">{{ d.name }}</span>
                             </td>
@@ -1218,6 +1253,10 @@
 
 <script>
     const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const nameFilter = document.getElementById("nameFilter");
+    const vehicleFilter = document.getElementById("vehicleFilter");
+    const violationFilter = document.getElementById("violationFilter");
     const table = document.getElementById("driverTable");
     const tbody = table.querySelector("tbody");
     const rows = Array.from(tbody.querySelectorAll("tr"));
@@ -1232,13 +1271,35 @@
     const nearestStatus = document.getElementById("nearestStatus");
     const suggestionTimers = {};
 
-    searchInput.addEventListener("keyup", function () {
-        const filter = searchInput.value.toLowerCase();
+    function applyTableFilters() {
+        const globalFilter = searchInput.value.toLowerCase().trim();
+        const statusValue = statusFilter.value.toUpperCase().trim();
+        const nameValue = nameFilter.value.toLowerCase().trim();
+        const vehicleValue = vehicleFilter.value.toLowerCase().trim();
+        const violationValue = violationFilter.value.trim();
+
         rows.forEach(row => {
             const rowText = row.innerText.toLowerCase();
-            row.style.display = rowText.includes(filter) ? "" : "none";
+            const rowStatus = row.dataset.driverStatus || "";
+            const rowName = row.dataset.driverName || "";
+            const rowVehicle = row.dataset.driverVehicle || "";
+            const rowViolation = row.dataset.hasViolations || "no";
+
+            const matchesGlobal = !globalFilter || rowText.includes(globalFilter);
+            const matchesStatus = !statusValue || rowStatus.includes(statusValue);
+            const matchesName = !nameValue || rowName.includes(nameValue);
+            const matchesVehicle = !vehicleValue || rowVehicle.includes(vehicleValue);
+            const matchesViolation = !violationValue || rowViolation === violationValue;
+
+            row.style.display = matchesGlobal && matchesStatus && matchesName && matchesVehicle && matchesViolation ? "" : "none";
         });
-    });
+    }
+
+    searchInput.addEventListener("keyup", applyTableFilters);
+    statusFilter.addEventListener("change", applyTableFilters);
+    nameFilter.addEventListener("input", applyTableFilters);
+    vehicleFilter.addEventListener("input", applyTableFilters);
+    violationFilter.addEventListener("change", applyTableFilters);
 
     const layout = document.getElementById("layout");
     const sidebarToggle = document.getElementById("sidebarToggle");

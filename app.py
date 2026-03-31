@@ -591,6 +591,7 @@ def ensure_db_ready():
                     status TEXT NOT NULL DEFAULT '',
                     location TEXT NOT NULL DEFAULT '',
                     vehicle TEXT NOT NULL DEFAULT '',
+                    has_violations BOOLEAN NOT NULL DEFAULT FALSE,
                     minutes INTEGER NOT NULL DEFAULT 0,
                     alerted BOOLEAN NOT NULL DEFAULT FALSE,
                     dispatch_status TEXT NOT NULL DEFAULT '',
@@ -598,6 +599,12 @@ def ensure_db_ready():
                     source TEXT NOT NULL DEFAULT '',
                     synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 )
+                """
+            )
+            cur.execute(
+                """
+                ALTER TABLE driver_feed
+                ADD COLUMN IF NOT EXISTS has_violations BOOLEAN NOT NULL DEFAULT FALSE
                 """
             )
             cur.execute(
@@ -746,15 +753,16 @@ def sync_driver_feed_to_db(conn, raw_data, prune_missing=True):
             cur.execute(
                 """
                 INSERT INTO driver_feed (
-                    driver_key, name, status, location, vehicle, minutes,
+                    driver_key, name, status, location, vehicle, has_violations, minutes,
                     alerted, dispatch_status, assigned_to, source, synced_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                 ON CONFLICT (driver_key) DO UPDATE SET
                     name = EXCLUDED.name,
                     status = EXCLUDED.status,
                     location = EXCLUDED.location,
                     vehicle = EXCLUDED.vehicle,
+                    has_violations = EXCLUDED.has_violations,
                     minutes = EXCLUDED.minutes,
                     alerted = EXCLUDED.alerted,
                     dispatch_status = EXCLUDED.dispatch_status,
@@ -768,6 +776,7 @@ def sync_driver_feed_to_db(conn, raw_data, prune_missing=True):
                     str(driver.get("status", "")),
                     str(driver.get("location", "")),
                     str(driver.get("vehicle", "")),
+                    bool(driver.get("has_violations", False)),
                     int(driver.get("minutes", 0) or 0),
                     bool(driver.get("alerted", False)),
                     str(driver.get("dispatch_status", "")),
@@ -877,6 +886,7 @@ def normalize_safelane_driver(driver):
         "status": extract_safelane_status(driver),
         "location": str(driver.get("location_text", "")).strip(),
         "vehicle": str(driver.get("vehicle_name", "")).strip(),
+        "has_violations": bool(driver.get("has_violations", False)),
         "minutes": 0,
         "alerted": False,
         "dispatch_status": "",
@@ -1135,6 +1145,7 @@ def build_db_drivers():
                     f.status,
                     f.location,
                     f.vehicle,
+                    f.has_violations,
                     f.minutes,
                     COALESCE(s.delivery_address, '') AS delivery_address,
                     s.appt_time AS appt_time,
