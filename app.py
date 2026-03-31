@@ -38,6 +38,14 @@ SAFE_LANE_DRIVERS_URL = "https://cloud.safelaneeld.com/rest/logs_by_driver_view"
 HTTP_HEADERS = {
     "User-Agent": "dispatch-system/1.0 (+dispatch-dashboard)"
 }
+SAFE_LANE_STATUS_CODE_MAP = {
+    "DS_D": "DRIVING",
+    "DS_SB": "SLEEPER",
+    "DS_OFF": "OFF DUTY",
+    "DS_ON": "ON DUTY",
+    "DS_YM": "YARD MOVE",
+    "DS_PC": "PERSONAL CONVEYANCE",
+}
 
 DB_INIT_DONE = False
 SYNC_LOCK = threading.Lock()
@@ -266,6 +274,52 @@ def fallback_vehicle(driver_key, driver):
     return "N/A"
 
 
+def canonical_status_text(value):
+    raw_value = str(value or "").strip().upper()
+    if not raw_value:
+        return ""
+
+    if raw_value in SAFE_LANE_STATUS_CODE_MAP:
+        return SAFE_LANE_STATUS_CODE_MAP[raw_value]
+    if raw_value in {"D", "DRIVE", "DRIVING"}:
+        return "DRIVING"
+    if raw_value in {"SB", "SLEEPER", "SLEEPER BERTH"}:
+        return "SLEEPER"
+    if raw_value in {"OFF", "OFF DUTY"}:
+        return "OFF DUTY"
+    if raw_value in {"ON", "ON DUTY"}:
+        return "ON DUTY"
+    if raw_value in {"YM", "YARD MOVE"}:
+        return "YARD MOVE"
+    if raw_value in {"PC", "PERSONAL CONVEYANCE"}:
+        return "PERSONAL CONVEYANCE"
+    return raw_value
+
+
+def extract_safelane_status(driver):
+    status_candidates = [
+        driver.get("code"),
+        driver.get("status"),
+        driver.get("duty_status"),
+        driver.get("dutyStatus"),
+        driver.get("current_status"),
+        driver.get("currentStatus"),
+        driver.get("log_status"),
+        driver.get("hos_status"),
+    ]
+
+    for candidate in status_candidates:
+        normalized = canonical_status_text(candidate)
+        if normalized:
+            return normalized
+
+    connection_status = str(driver.get("connection_status", "")).strip().upper()
+    if connection_status == "CONNECTED":
+        return "ON DUTY"
+
+    return ""
+
+
 def fetch_json(url, params=None):
     try:
         final_url = url
@@ -463,14 +517,21 @@ def build_route_eta(driver_location, delivery_address):
         return None
 
     route_metrics = get_route_metrics(origin, destination)
-    if not route_metrics:
-        return None
+    if route_metrics:
+        eta_dt = datetime.now() + timedelta(seconds=route_metrics["duration_seconds"])
+        return {
+            "eta_dt": eta_dt,
+            "eta": format_eta(eta_dt),
+            "distance_miles": route_metrics["distance_miles"],
+        }
 
-    eta_dt = datetime.now() + timedelta(seconds=route_metrics["duration_seconds"])
+    distance_miles = round(haversine_miles(origin, destination), 1)
+    duration_hours = distance_miles / 55 if distance_miles > 0 else 0
+    eta_dt = datetime.now() + timedelta(hours=duration_hours)
     return {
         "eta_dt": eta_dt,
         "eta": format_eta(eta_dt),
-        "distance_miles": route_metrics["distance_miles"],
+        "distance_miles": distance_miles,
     }
 
 
@@ -791,11 +852,7 @@ def normalize_safelane_driver(driver):
     return {
         "driver_key": name,
         "name": name,
-        "status": str(
-            driver.get("status")
-            or driver.get("duty_status")
-            or driver.get("connection_status", "")
-        ).upper(),
+        "status": extract_safelane_status(driver),
         "location": str(driver.get("location_text", "")).strip(),
         "vehicle": str(driver.get("vehicle_name", "")).strip(),
         "minutes": 0,
@@ -1119,13 +1176,18 @@ def find_nearest_matches(address, drivers):
     if not destination:
         return None
 
+    geocode_cache = {}
     prepared = []
     for driver in drivers:
         location_query = clean_location(driver.get("location", ""))
         if not location_query:
             continue
 
-        origin = geocode_address(location_query)
+        cache_key = normalize_cache_key(location_query)
+        origin = geocode_cache.get(cache_key)
+        if origin is None:
+            origin = geocode_address(location_query)
+            geocode_cache[cache_key] = origin
         if not origin:
             continue
 
@@ -1140,29 +1202,17 @@ def find_nearest_matches(address, drivers):
         return []
 
     matches = []
-    chunk_size = 40
 
-    for chunk_start in range(0, len(prepared), chunk_size):
-        chunk = prepared[chunk_start:chunk_start + chunk_size]
-        source_coords = [item["origin"] for item in chunk]
-        table_metrics = get_table_metrics(source_coords, destination)
-
-        for index, item in enumerate(chunk):
-            metrics = table_metrics[index] if table_metrics and index < len(table_metrics) else None
-            if metrics and metrics["distance_miles"] is not None:
-                distance_miles = metrics["distance_miles"]
-                duration_minutes = int(round((metrics["duration_seconds"] or 0) / 60))
-            else:
-                distance_miles = round(haversine_miles(item["origin"], destination), 1)
-                duration_minutes = int(round((distance_miles / 55) * 60))
-
-            matches.append(
-                {
-                    "driver_key": item["driver"]["driver_key"],
-                    "distance_miles": distance_miles,
-                    "duration_minutes": duration_minutes,
-                }
-            )
+    for item in prepared:
+        distance_miles = round(haversine_miles(item["origin"], destination), 1)
+        duration_minutes = int(round((distance_miles / 55) * 60))
+        matches.append(
+            {
+                "driver_key": item["driver"]["driver_key"],
+                "distance_miles": distance_miles,
+                "duration_minutes": duration_minutes,
+            }
+        )
 
     matches.sort(key=lambda item: item["distance_miles"])
     return matches
