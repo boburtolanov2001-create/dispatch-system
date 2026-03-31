@@ -585,6 +585,9 @@ def seed_db_from_files(conn):
 def sync_driver_feed_to_db(conn, raw_data, prune_missing=True):
     current_keys = []
 
+    if not raw_data:
+        return False
+
     with conn.cursor() as cur:
         for raw_key, driver in raw_data.items():
             if not isinstance(driver, dict):
@@ -628,14 +631,13 @@ def sync_driver_feed_to_db(conn, raw_data, prune_missing=True):
                 ),
             )
 
-        if prune_missing:
-            if current_keys:
-                cur.execute(
-                    "DELETE FROM driver_feed WHERE NOT (driver_key = ANY(%s))",
-                    (current_keys,),
-                )
-            else:
-                cur.execute("DELETE FROM driver_feed")
+        if prune_missing and current_keys:
+            cur.execute(
+                "DELETE FROM driver_feed WHERE NOT (driver_key = ANY(%s))",
+                (current_keys,),
+            )
+
+    return True
 
 
 def get_login_users():
