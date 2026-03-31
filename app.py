@@ -50,11 +50,13 @@ USERS_FILE = "user_assignments.json"
 GEOCODE_CACHE_FILE = "geo_cache.json"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 AUTOCOMPLETE_SERVICE_URL = os.environ.get("AUTOCOMPLETE_SERVICE_URL", "http://127.0.0.1:8000/autocomplete").strip()
+GEOAPIFY_API_KEY = os.environ.get("GEOAPIFY_API_KEY", "").strip()
 SAFE_LANE_USERNAME = os.environ.get("SAFELANE_USERNAME", "").strip()
 SAFE_LANE_PASSWORD = os.environ.get("SAFELANE_PASSWORD", "").strip()
 SAFE_LANE_SYNC_INTERVAL_SECONDS = int(os.environ.get("SAFELANE_SYNC_INTERVAL_SECONDS", "180"))
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+GEOAPIFY_AUTOCOMPLETE_URL = "https://api.geoapify.com/v1/geocode/autocomplete"
 OSRM_ROUTE_URL = "https://router.project-osrm.org/route/v1/driving"
 OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving"
 IPIFY_URL = "https://api.ipify.org/"
@@ -408,6 +410,43 @@ def suggest_addresses(query, limit=5):
     return suggestions
 
 
+def suggest_addresses_geoapify(query, limit=5):
+    query = str(query or "").strip()
+    if len(query) < 3 or not GEOAPIFY_API_KEY:
+        return []
+
+    try:
+        with httpx.Client(timeout=httpx.Timeout(5.0, connect=2.0)) as client:
+            response = client.get(
+                GEOAPIFY_AUTOCOMPLETE_URL,
+                params={
+                    "text": query,
+                    "limit": limit,
+                    "format": "json",
+                    "apiKey": GEOAPIFY_API_KEY,
+                },
+                headers=HTTP_HEADERS,
+            )
+            response.raise_for_status()
+            payload = response.json()
+    except Exception:
+        return []
+
+    suggestions = []
+    seen = set()
+    for item in payload.get("results", []):
+        label = str(item.get("formatted") or item.get("address_line1") or "").strip()
+        if not label:
+            continue
+        normalized = normalize_cache_key(label)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        suggestions.append({"label": label})
+
+    return suggestions[:limit]
+
+
 def fetch_autocomplete_suggestions(query, limit=5):
     query = str(query or "").strip()
     if len(query) < 3:
@@ -427,6 +466,10 @@ def fetch_autocomplete_suggestions(query, limit=5):
                     return suggestions[:limit]
         except Exception:
             pass
+
+    geoapify_suggestions = suggest_addresses_geoapify(query, limit=limit)
+    if geoapify_suggestions:
+        return geoapify_suggestions
 
     return suggest_addresses(query, limit=limit)
 
