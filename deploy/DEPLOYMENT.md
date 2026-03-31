@@ -29,7 +29,7 @@ Data moved to DB:
 - ETA delay
 - notes
 
-The live driver feed can still be imported from `tracked_drivers.json`, and the app syncs that feed into PostgreSQL-backed views at runtime.
+The live driver feed is synced from the SafeLane API into PostgreSQL. The app reads the dashboard from PostgreSQL, not from runtime JSON files.
 
 ## GitHub secrets to add
 
@@ -79,11 +79,26 @@ Create `/root/dispatch-system/.env` on the server:
 ```bash
 cat >/root/dispatch-system/.env <<'EOF'
 DATABASE_URL=postgresql://dispatch_user:change_me@127.0.0.1:5432/dispatch_system
+SAFELANE_USERNAME=sdglobal@gmail.com
+SAFELANE_PASSWORD=change_me
+SAFELANE_SYNC_INTERVAL_SECONDS=180
 EOF
 chmod 600 /root/dispatch-system/.env
 ```
 
 You can use `.env.example` in the repo as the template.
+
+## SafeLane sync
+
+When `SAFELANE_USERNAME` and `SAFELANE_PASSWORD` are set, the app will:
+
+1. sign in to SafeLane
+2. store the current SafeLane token in PostgreSQL
+3. sync active drivers into `driver_feed`
+4. refresh the token automatically after `401`
+5. repeat sync every 3 minutes by default
+
+Dispatcher-edited state such as delivery address, APPT, ETA, ETA status, and notes stays in PostgreSQL and is not overwritten by SafeLane feed sync.
 
 ## SSH authentication
 

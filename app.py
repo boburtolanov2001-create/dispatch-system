@@ -2,7 +2,11 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import json
 import math
 import os
+import socket
+import threading
+import time
 from datetime import datetime, timedelta
+from urllib.error import HTTPError
 from urllib.parse import urlencode, quote
 from urllib.request import Request, urlopen
 
@@ -21,15 +25,23 @@ JSON_FILE = "tracked_drivers.json"
 USERS_FILE = "user_assignments.json"
 GEOCODE_CACHE_FILE = "geo_cache.json"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+SAFE_LANE_USERNAME = os.environ.get("SAFELANE_USERNAME", "").strip()
+SAFE_LANE_PASSWORD = os.environ.get("SAFELANE_PASSWORD", "").strip()
+SAFE_LANE_SYNC_INTERVAL_SECONDS = int(os.environ.get("SAFELANE_SYNC_INTERVAL_SECONDS", "180"))
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 OSRM_ROUTE_URL = "https://router.project-osrm.org/route/v1/driving"
 OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving"
+IPIFY_URL = "https://api.ipify.org/"
+SAFE_LANE_SIGN_IN_URL = "https://cloud.safelaneeld.com/rest/rpc/sign_in_v2"
+SAFE_LANE_DRIVERS_URL = "https://cloud.safelaneeld.com/rest/logs_by_driver_view"
 HTTP_HEADERS = {
     "User-Agent": "dispatch-system/1.0 (+dispatch-dashboard)"
 }
 
 DB_INIT_DONE = False
+SYNC_LOCK = threading.Lock()
+SYNC_THREAD_STARTED = False
 
 
 def db_enabled():
@@ -266,6 +278,26 @@ def fetch_json(url, params=None):
         return None
 
 
+def post_json(url, payload, headers=None):
+    try:
+        request_headers = {
+            "Content-Type": "application/json",
+            **HTTP_HEADERS,
+        }
+        if headers:
+            request_headers.update(headers)
+        request_obj = Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers=request_headers,
+            method="POST",
+        )
+        with urlopen(request_obj, timeout=20) as response:
+            return json.load(response)
+    except Exception:
+        return None
+
+
 def suggest_addresses(query, limit=5):
     query = str(query or "").strip()
     if len(query) < 3:
@@ -452,6 +484,15 @@ def ensure_db_ready():
         with conn.cursor() as cur:
             cur.execute(
                 """
+                CREATE TABLE IF NOT EXISTS app_settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+            cur.execute(
+                """
                 CREATE TABLE IF NOT EXISTS app_users (
                     username TEXT PRIMARY KEY,
                     password TEXT NOT NULL DEFAULT '',
@@ -507,6 +548,27 @@ def ensure_db_ready():
         conn.commit()
 
     DB_INIT_DONE = True
+
+
+def get_setting(conn, key):
+    with conn.cursor() as cur:
+        cur.execute("SELECT value FROM app_settings WHERE key = %s", (key,))
+        row = cur.fetchone()
+    return row["value"] if row else None
+
+
+def set_setting(conn, key, value):
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO app_settings (key, value, updated_at)
+            VALUES (%s, %s, NOW())
+            ON CONFLICT (key) DO UPDATE SET
+                value = EXCLUDED.value,
+                updated_at = NOW()
+            """,
+            (key, value),
+        )
 
 
 def seed_db_from_files(conn):
@@ -640,11 +702,187 @@ def sync_driver_feed_to_db(conn, raw_data, prune_missing=True):
     return True
 
 
+def get_public_ip():
+    data = fetch_json(IPIFY_URL, {"format": "json"})
+    if not data:
+        return ""
+    return str(data.get("ip", "")).strip()
+
+
+def get_safe_lane_device_name():
+    host = socket.gethostname()
+    return f"{host} Dispatch System"
+
+
+def sign_in_safe_lane(conn):
+    if not SAFE_LANE_USERNAME or not SAFE_LANE_PASSWORD:
+        raise RuntimeError("SAFELANE_USERNAME and SAFELANE_PASSWORD are required.")
+
+    public_ip = get_public_ip()
+    payload = {
+        "username": SAFE_LANE_USERNAME,
+        "password": SAFE_LANE_PASSWORD,
+        "parameters": {
+            "device_id": socket.gethostname(),
+            "device_name": get_safe_lane_device_name(),
+            "location_text": "",
+            "ip": public_ip,
+        },
+    }
+    response = post_json(SAFE_LANE_SIGN_IN_URL, payload)
+    if not response or not response.get("token"):
+        raise RuntimeError("SafeLane sign-in failed.")
+
+    set_setting(conn, "safelane_token", response["token"])
+    set_setting(conn, "safelane_account_id", str(response.get("account_id", "")))
+    set_setting(conn, "safelane_company_id", str(response.get("company_id", "")))
+
+    return {
+        "token": response["token"],
+        "account_id": str(response.get("account_id", "")),
+        "company_id": str(response.get("company_id", "")),
+    }
+
+
+def get_safelane_auth(conn):
+    token = get_setting(conn, "safelane_token")
+    account_id = get_setting(conn, "safelane_account_id")
+    company_id = get_setting(conn, "safelane_company_id")
+    if token and account_id and company_id:
+        return {
+            "token": token,
+            "account_id": account_id,
+            "company_id": company_id,
+        }
+    return sign_in_safe_lane(conn)
+
+
+def fetch_safelane_drivers(auth):
+    query = {
+        "order": "last_seen.desc.nullslast",
+        "limit": 1000,
+        "and": f"(is_active.eq.true,company_id.eq.{auth['company_id']})",
+    }
+    request_obj = Request(
+        f"{SAFE_LANE_DRIVERS_URL}?{urlencode(query)}",
+        headers={
+            "Accept": "application/json, text/plain, */*",
+            "Authorization": f"Bearer {auth['token']}",
+            "x-eld-account-id": auth["account_id"],
+            **HTTP_HEADERS,
+        },
+    )
+    with urlopen(request_obj, timeout=30) as response:
+        status_code = getattr(response, "status", 200)
+        body = response.read().decode("utf-8")
+    return status_code, json.loads(body)
+
+
+def normalize_safelane_driver(driver):
+    name = str(
+        driver.get("full_name")
+        or f"{driver.get('first_name', '')} {driver.get('last_name', '')}".strip()
+        or driver.get("username", "")
+        or driver.get("id", "")
+    ).strip()
+    if not name:
+        return None
+
+    return {
+        "driver_key": name,
+        "name": name,
+        "status": str(
+            driver.get("status")
+            or driver.get("duty_status")
+            or driver.get("connection_status", "")
+        ).upper(),
+        "location": str(driver.get("location_text", "")).strip(),
+        "vehicle": str(driver.get("vehicle_name", "")).strip(),
+        "minutes": 0,
+        "alerted": False,
+        "dispatch_status": "",
+        "assigned_to": "",
+        "source": "safe_lane_api",
+    }
+
+
+def sync_safelane_feed(force=False):
+    if not db_enabled():
+        return False
+
+    ensure_db_ready()
+
+    if not SYNC_LOCK.acquire(blocking=False):
+        return False
+
+    try:
+        with connect_db() as conn:
+            last_sync_raw = get_setting(conn, "last_driver_sync_at")
+            if not force and last_sync_raw:
+                try:
+                    last_sync = datetime.fromisoformat(last_sync_raw)
+                    if (datetime.utcnow() - last_sync).total_seconds() < SAFE_LANE_SYNC_INTERVAL_SECONDS:
+                        return False
+                except ValueError:
+                    pass
+
+            auth = get_safelane_auth(conn)
+            try:
+                _, payload = fetch_safelane_drivers(auth)
+            except HTTPError as exc:
+                if exc.code != 401:
+                    raise
+                auth = sign_in_safe_lane(conn)
+                _, payload = fetch_safelane_drivers(auth)
+
+            normalized = {}
+            for driver in payload or []:
+                normalized_driver = normalize_safelane_driver(driver)
+                if not normalized_driver:
+                    continue
+                normalized[normalized_driver["driver_key"]] = normalized_driver
+
+            sync_driver_feed_to_db(conn, normalized, prune_missing=True)
+            set_setting(conn, "last_driver_sync_at", datetime.utcnow().isoformat())
+            conn.commit()
+        return True
+    finally:
+        SYNC_LOCK.release()
+
+
+def safe_safelane_sync(force=False):
+    try:
+        return sync_safelane_feed(force=force)
+    except Exception:
+        return False
+
+
+def background_sync_loop():
+    interval_seconds = max(60, SAFE_LANE_SYNC_INTERVAL_SECONDS)
+    while True:
+        safe_safelane_sync(force=True)
+        time.sleep(interval_seconds)
+
+
+def ensure_background_sync_started():
+    global SYNC_THREAD_STARTED
+
+    if SYNC_THREAD_STARTED or not db_enabled():
+        return
+    if not SAFE_LANE_USERNAME or not SAFE_LANE_PASSWORD:
+        return
+
+    thread = threading.Thread(target=background_sync_loop, name="safelane-sync", daemon=True)
+    thread.start()
+    SYNC_THREAD_STARTED = True
+
+
 def get_login_users():
     if not db_enabled():
         return load_login_users_file()
 
     ensure_db_ready()
+    ensure_background_sync_started()
     with connect_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT username, password FROM app_users ORDER BY username")
@@ -656,6 +894,7 @@ def get_assignment_map():
         return load_users_file()
 
     ensure_db_ready()
+    ensure_background_sync_started()
     assignments = {}
     with connect_db() as conn:
         with conn.cursor() as cur:
@@ -681,6 +920,7 @@ def get_assigned_keys(username):
         return set(load_users_file().get(username, []))
 
     ensure_db_ready()
+    ensure_background_sync_started()
     with connect_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -790,9 +1030,9 @@ def get_driver_location(driver_key):
         return load_data().get(driver_key, {}).get("location", "")
 
     ensure_db_ready()
-    raw_data = load_data()
+    ensure_background_sync_started()
+    safe_safelane_sync()
     with connect_db() as conn:
-        sync_driver_feed_to_db(conn, raw_data, prune_missing=True)
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT location FROM driver_feed WHERE driver_key = %s",
@@ -805,10 +1045,10 @@ def get_driver_location(driver_key):
 
 def build_db_drivers():
     ensure_db_ready()
-    raw_data = load_data()
+    ensure_background_sync_started()
+    safe_safelane_sync()
 
     with connect_db() as conn:
-        sync_driver_feed_to_db(conn, raw_data, prune_missing=True)
         with conn.cursor() as cur:
             cur.execute(
                 """
