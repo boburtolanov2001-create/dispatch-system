@@ -20,6 +20,28 @@ except ImportError:  # pragma: no cover
 app = Flask(__name__)
 app.secret_key = "super_secret_key"
 
+
+def load_simple_env(path=".env"):
+    if not os.path.exists(path):
+        return
+
+    try:
+        with open(path, "r", encoding="utf-8") as env_file:
+            for raw_line in env_file:
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if key and key not in os.environ:
+                    os.environ[key] = value
+    except OSError:
+        return
+
+
+load_simple_env()
+
 LOGIN_FILE = "users.json"
 JSON_FILE = "tracked_drivers.json"
 USERS_FILE = "user_assignments.json"
