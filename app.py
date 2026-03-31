@@ -1088,7 +1088,6 @@ def get_driver_location(driver_key):
 
     ensure_db_ready()
     ensure_background_sync_started()
-    safe_safelane_sync()
     with connect_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -1103,7 +1102,6 @@ def get_driver_location(driver_key):
 def build_db_drivers():
     ensure_db_ready()
     ensure_background_sync_started()
-    safe_safelane_sync()
 
     with connect_db() as conn:
         with conn.cursor() as cur:
@@ -1169,6 +1167,14 @@ def build_drivers():
     if db_enabled():
         return build_db_drivers()
     return build_file_drivers()
+
+
+@app.before_request
+def bootstrap_runtime_services():
+    if not db_enabled():
+        return
+    ensure_db_ready()
+    ensure_background_sync_started()
 
 
 def find_nearest_matches(address, drivers):
