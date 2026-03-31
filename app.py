@@ -213,6 +213,20 @@ def normalize_cache_key(text):
     return " ".join(str(text).strip().lower().split())
 
 
+def fallback_vehicle(driver_key, driver):
+    vehicle = str(driver.get("vehicle", "")).strip()
+    if vehicle:
+        return vehicle
+
+    key_text = str(driver_key or "").strip()
+    if "|" in key_text:
+        maybe_vehicle = key_text.rsplit("|", 1)[-1].strip()
+        if maybe_vehicle:
+            return maybe_vehicle
+
+    return "N/A"
+
+
 def fetch_json(url, params=None):
     try:
         final_url = url
@@ -277,7 +291,19 @@ def geocode_address(address):
         },
     )
     if not data:
-        return None
+        suggestions = suggest_addresses(address, limit=1)
+        if not suggestions:
+            return None
+
+        suggestion_label = suggestions[0]["label"]
+        if normalize_cache_key(suggestion_label) == cache_key:
+            return None
+
+        suggestion_result = geocode_address(suggestion_label)
+        if suggestion_result:
+            cache[cache_key] = suggestion_result
+            save_geo_cache(cache)
+        return suggestion_result
 
     item = data[0]
     result = {
@@ -397,6 +423,7 @@ def build_drivers():
         driver = d.copy()
         driver["driver_key"] = key
         driver["location"] = pretty_city_case(clean_location(driver.get("location", "")))
+        driver["vehicle"] = fallback_vehicle(key, driver)
         driver["risk"] = get_risk(driver.get("status", ""), driver.get("minutes", 0))
         drivers.append(driver)
 

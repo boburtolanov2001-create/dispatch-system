@@ -690,7 +690,6 @@
         .col-vehicle { width: 80px; }
         .col-status { width: 110px; }
         .col-location { width: 130px; }
-        .col-minutes { width: 80px; }
         .col-delivery { width: 230px; }
         .col-appt { width: 170px; }
         .col-eta { width: 120px; }
@@ -743,37 +742,6 @@
         body.light-mode .status-onduty { background: #dbeafe; color: #1d4ed8; }
         body.light-mode .status-off { background: #e5e7eb; color: #475569; }
         body.light-mode .status-default { background: #e5e7eb; color: #374151; }
-
-        .minutes-chip {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 44px;
-            padding: 5px 10px;
-            border-radius: 999px;
-            background: rgba(255,255,255,0.08);
-            color: var(--text);
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .minutes-danger { background: rgba(239,68,68,0.18); color: #fca5a5; }
-        .minutes-warning { background: rgba(245,158,11,0.20); color: #fcd34d; }
-
-        body.light-mode .minutes-chip {
-            background: #f1f5f9;
-            color: #334155;
-        }
-
-        body.light-mode .minutes-danger {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        body.light-mode .minutes-warning {
-            background: #fef3c7;
-            color: #92400e;
-        }
 
         .form-input {
             width: 100%;
@@ -1112,7 +1080,6 @@
                             <th class="col-vehicle">Vehicle</th>
                             <th class="col-status">Status</th>
                             <th class="col-location">Location</th>
-                            <th class="col-minutes">Minutes</th>
                             <th class="col-delivery">Delivery Address</th>
                             <th class="col-appt">APPT</th>
                             <th class="col-eta">ETA</th>
@@ -1125,7 +1092,6 @@
                     <tbody>
                         {% for d in drivers %}
                         {% set status_upper = d.status.upper() %}
-                        {% set minutes_val = d.minutes|int %}
 
                         <tr class="row-{{ d.risk }}" data-driver-key="{{ d.driver_key }}">
                             <td class="col-name" title="{{ d.name }}">
@@ -1155,16 +1121,6 @@
                                     <span>{{ d.location }}</span>
                                     <span class="nearest-meta" id="nearest-meta-{{ d.driver_key }}"></span>
                                 </div>
-                            </td>
-
-                            <td class="col-minutes">
-                                {% if minutes_val >= 60 %}
-                                    <span class="minutes-chip minutes-danger">{{ d.minutes }}</span>
-                                {% elif minutes_val >= 30 %}
-                                    <span class="minutes-chip minutes-warning">{{ d.minutes }}</span>
-                                {% else %}
-                                    <span class="minutes-chip">{{ d.minutes }}</span>
-                                {% endif %}
                             </td>
 
                             <td class="col-delivery">
