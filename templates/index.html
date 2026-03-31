@@ -1100,12 +1100,14 @@
             <div class="stat-card nearest-card">
                 <div class="stat-label">Find Nearest Drivers By Address</div>
                 <div class="nearest-controls">
-                    <input
-                        type="text"
-                        id="nearestAddressInput"
-                        class="form-input nearest-input address-autocomplete"
-                        placeholder="Enter any address to sort drivers by nearest">
-                    <div class="suggestions-menu" id="nearestSuggestions"></div>
+                    <div class="autocomplete-wrap nearest-input">
+                        <input
+                            type="text"
+                            id="nearestAddressInput"
+                            class="form-input address-autocomplete"
+                            placeholder="Enter any address to sort drivers by nearest">
+                        <div class="suggestions-menu" id="nearestSuggestions"></div>
+                    </div>
                     <button type="button" class="secondary-btn" id="nearestSearchBtn">Find Nearest</button>
                     <button type="button" class="secondary-btn" id="nearestClearBtn">Clear</button>
                 </div>
@@ -1569,12 +1571,10 @@
             return;
         }
 
-        fetch(`/address-suggest?q=${encodeURIComponent(value.trim())}`)
+        fetch(`/autocomplete?q=${encodeURIComponent(value.trim())}`)
             .then(response => response.json())
             .then(result => {
-                if (result.success) {
-                    renderSuggestions(menu, input, result.suggestions || []);
-                }
+                renderSuggestions(menu, input, result.suggestions || []);
             })
             .catch(() => {
                 closeSuggestionMenu(menu);

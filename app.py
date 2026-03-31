@@ -10,6 +10,8 @@ from urllib.error import HTTPError
 from urllib.parse import urlencode, quote
 from urllib.request import Request, urlopen
 
+import httpx
+
 try:
     import psycopg
     from psycopg.rows import dict_row
@@ -47,6 +49,7 @@ JSON_FILE = "tracked_drivers.json"
 USERS_FILE = "user_assignments.json"
 GEOCODE_CACHE_FILE = "geo_cache.json"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+AUTOCOMPLETE_SERVICE_URL = os.environ.get("AUTOCOMPLETE_SERVICE_URL", "http://127.0.0.1:8000/autocomplete").strip()
 SAFE_LANE_USERNAME = os.environ.get("SAFELANE_USERNAME", "").strip()
 SAFE_LANE_PASSWORD = os.environ.get("SAFELANE_PASSWORD", "").strip()
 SAFE_LANE_SYNC_INTERVAL_SECONDS = int(os.environ.get("SAFELANE_SYNC_INTERVAL_SECONDS", "180"))
@@ -403,6 +406,29 @@ def suggest_addresses(query, limit=5):
         suggestions.append({"label": label})
 
     return suggestions
+
+
+def fetch_autocomplete_suggestions(query, limit=5):
+    query = str(query or "").strip()
+    if len(query) < 3:
+        return []
+
+    if AUTOCOMPLETE_SERVICE_URL:
+        try:
+            with httpx.Client(timeout=httpx.Timeout(5.0, connect=2.0)) as client:
+                response = client.get(
+                    AUTOCOMPLETE_SERVICE_URL,
+                    params={"q": query},
+                )
+                response.raise_for_status()
+                payload = response.json()
+                suggestions = payload.get("suggestions", [])
+                if isinstance(suggestions, list):
+                    return suggestions[:limit]
+        except Exception:
+            pass
+
+    return suggest_addresses(query, limit=limit)
 
 
 def geocode_address(address):
@@ -1396,16 +1422,14 @@ def remove_driver():
     return redirect(url_for("my_drivers"))
 
 
+@app.route("/autocomplete")
 @app.route("/address-suggest")
 def address_suggest():
     if not require_login():
-        return jsonify({"success": False, "error": "Not logged in"}), 401
+        return jsonify({"error": "Not logged in"}), 401
 
     query = request.args.get("q", "").strip()
-    return jsonify({
-        "success": True,
-        "suggestions": suggest_addresses(query),
-    })
+    return jsonify({"suggestions": fetch_autocomplete_suggestions(query)})
 
 
 @app.route("/nearest-drivers")
