@@ -125,6 +125,7 @@ Because this server deploys as `root`, the workflow can restart the service dire
 
 These files are intentionally excluded from deploy sync so live server data is preserved:
 
+- `.env`
 - `tracked_drivers.json`
 - `user_assignments.json`
 - `users.json`

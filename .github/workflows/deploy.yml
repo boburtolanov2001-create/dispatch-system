@@ -41,6 +41,7 @@ jobs:
             --exclude '.idea/' \
             --exclude '.venv/' \
             --exclude '__pycache__/' \
+            --exclude '.env' \
             --exclude 'tracked_drivers.json' \
             --exclude 'user_assignments.json' \
             --exclude 'users.json' \
