@@ -776,10 +776,7 @@
         }
 
         .suggestions-menu {
-            position: absolute;
-            top: calc(100% + 4px);
-            left: 0;
-            right: 0;
+            position: fixed;
             background: var(--panel);
             border: 1px solid var(--border);
             border-radius: 10px;
@@ -787,7 +784,8 @@
             max-height: 220px;
             overflow-y: auto;
             display: none;
-            z-index: 30;
+            z-index: 9999;
+            min-width: 260px;
         }
 
         .suggestions-menu.open {
@@ -1109,7 +1107,6 @@
                             id="nearestAddressInput"
                             class="form-input address-autocomplete"
                             placeholder="Enter any address to sort drivers by nearest">
-                        <div class="suggestions-menu" id="nearestSuggestions"></div>
                     </div>
                     <button type="button" class="secondary-btn" id="nearestSearchBtn">Find Nearest</button>
                     <button type="button" class="secondary-btn" id="nearestClearBtn">Clear</button>
@@ -1213,7 +1210,6 @@
                                         data-driver-key="{{ d.driver_key }}"
                                         value="{{ d.delivery_address }}"
                                         placeholder="Delivery address">
-                                    <div class="suggestions-menu" id="suggestions-{{ d.driver_key }}"></div>
                                 </div>
                                 <div class="autosave-status" id="save-status-{{ d.driver_key }}"></div>
                             </td>
@@ -1298,6 +1294,8 @@
     <input type="hidden" name="driver_key" id="removeDriverKey">
 </form>
 
+<div class="suggestions-menu" id="floatingSuggestions"></div>
+
 <script>
     const searchInput = document.getElementById("searchInput");
     const statusFilter = document.getElementById("statusFilter");
@@ -1312,12 +1310,13 @@
     const panelSubtitle = document.getElementById("panelSubtitle");
     const defaultPanelSubtitle = panelSubtitle ? panelSubtitle.textContent.trim() : "";
     const nearestAddressInput = document.getElementById("nearestAddressInput");
-    const nearestSuggestions = document.getElementById("nearestSuggestions");
+    const floatingSuggestions = document.getElementById("floatingSuggestions");
     const nearestSearchBtn = document.getElementById("nearestSearchBtn");
     const nearestClearBtn = document.getElementById("nearestClearBtn");
     const nearestStatus = document.getElementById("nearestStatus");
     const suggestionTimers = {};
     let activeSuggestionMenu = null;
+    let activeSuggestionInput = null;
 
     function applyTableFilters() {
         const globalFilter = searchInput.value.toLowerCase().trim();
@@ -1516,35 +1515,31 @@
         milesInput.value = distanceValue || "";
     }
 
-    function closeSuggestionMenu(menu) {
-        if (!menu) return;
-        menu.classList.remove("open");
-        menu.innerHTML = "";
-        if (activeSuggestionMenu === menu) {
-            activeSuggestionMenu = null;
-        }
+    function closeSuggestionMenu() {
+        floatingSuggestions.classList.remove("open");
+        floatingSuggestions.innerHTML = "";
+        activeSuggestionMenu = null;
+        activeSuggestionInput = null;
     }
 
     function closeAllSuggestionMenus() {
-        document.querySelectorAll(".suggestions-menu").forEach(closeSuggestionMenu);
+        closeSuggestionMenu();
     }
 
-    function getSuggestionMenu(input) {
-        if (input.id === "nearestAddressInput") {
-            return nearestSuggestions;
-        }
-        return document.getElementById(`suggestions-${input.dataset.driverKey}`);
+    function positionSuggestionMenu(input) {
+        const rect = input.getBoundingClientRect();
+        floatingSuggestions.style.left = `${rect.left + window.scrollX}px`;
+        floatingSuggestions.style.top = `${rect.bottom + window.scrollY + 4}px`;
+        floatingSuggestions.style.width = `${rect.width}px`;
     }
 
-    function renderSuggestions(menu, input, suggestions) {
-        if (!menu) return;
-
+    function renderSuggestions(input, suggestions) {
         if (!suggestions.length) {
-            closeSuggestionMenu(menu);
+            closeSuggestionMenu();
             return;
         }
 
-        menu.innerHTML = "";
+        floatingSuggestions.innerHTML = "";
         suggestions.forEach(item => {
             const option = document.createElement("div");
             option.className = "suggestion-item";
@@ -1552,35 +1547,35 @@
             option.addEventListener("mousedown", function (event) {
                 event.preventDefault();
                 input.value = item.label;
-                closeSuggestionMenu(menu);
+                closeSuggestionMenu();
                 if (input.classList.contains("autosave-input")) {
                     input.dispatchEvent(new Event("change", { bubbles: true }));
                 }
             });
-            menu.appendChild(option);
+            floatingSuggestions.appendChild(option);
         });
 
-        closeAllSuggestionMenus();
-        menu.classList.add("open");
-        activeSuggestionMenu = menu;
+        activeSuggestionInput = input;
+        positionSuggestionMenu(input);
+        floatingSuggestions.classList.add("open");
+        activeSuggestionMenu = floatingSuggestions;
     }
 
     function fetchAddressSuggestions(input) {
         const value = input.value;
-        const menu = getSuggestionMenu(input);
 
         if (!value || value.trim().length < 3) {
-            closeSuggestionMenu(menu);
+            closeSuggestionMenu();
             return;
         }
 
         fetch(`/autocomplete?q=${encodeURIComponent(value.trim())}`)
             .then(response => response.json())
             .then(result => {
-                renderSuggestions(menu, input, result.suggestions || []);
+                renderSuggestions(input, result.suggestions || []);
             })
             .catch(() => {
-                closeSuggestionMenu(menu);
+                closeSuggestionMenu();
             });
     }
 
@@ -1600,16 +1595,27 @@
         });
 
         input.addEventListener("blur", function () {
-            const menu = getSuggestionMenu(this);
-            setTimeout(() => closeSuggestionMenu(menu), 120);
+            setTimeout(() => closeSuggestionMenu(), 120);
         });
     });
 
     document.addEventListener("click", function (event) {
-        if (!event.target.closest(".autocomplete-wrap") && !event.target.closest(".nearest-controls")) {
+        if (!event.target.closest(".autocomplete-wrap") && !event.target.closest("#floatingSuggestions")) {
             closeAllSuggestionMenus();
         }
     });
+
+    window.addEventListener("resize", function () {
+        if (activeSuggestionInput && activeSuggestionMenu) {
+            positionSuggestionMenu(activeSuggestionInput);
+        }
+    });
+
+    window.addEventListener("scroll", function () {
+        if (activeSuggestionInput && activeSuggestionMenu) {
+            positionSuggestionMenu(activeSuggestionInput);
+        }
+    }, true);
 
     function clearNearestMeta() {
         rows.forEach(row => {
