@@ -768,6 +768,48 @@
             outline: none;
         }
 
+        .autocomplete-wrap {
+            position: relative;
+        }
+
+        .suggestions-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 14px 30px rgba(0,0,0,0.18);
+            max-height: 220px;
+            overflow-y: auto;
+            display: none;
+            z-index: 30;
+        }
+
+        .suggestions-menu.open {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 10px 12px;
+            font-size: 13px;
+            color: var(--text);
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            white-space: normal;
+            line-height: 1.35;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover,
+        .suggestion-item.active {
+            background: var(--table-row-hover);
+        }
+
         .notes-input {
             width: 100%;
             min-height: 64px;
@@ -1062,8 +1104,8 @@
                         type="text"
                         id="nearestAddressInput"
                         class="form-input nearest-input address-autocomplete"
-                        list="addressSuggestions"
                         placeholder="Enter any address to sort drivers by nearest">
+                    <div class="suggestions-menu" id="nearestSuggestions"></div>
                     <button type="button" class="secondary-btn" id="nearestSearchBtn">Find Nearest</button>
                     <button type="button" class="secondary-btn" id="nearestClearBtn">Clear</button>
                 </div>
@@ -1159,13 +1201,15 @@
                             </td>
 
                             <td class="col-delivery">
-                                <input
-                                    type="text"
-                                    class="form-input autosave-input delivery-input address-autocomplete"
-                                    data-driver-key="{{ d.driver_key }}"
-                                    list="addressSuggestions"
-                                    value="{{ d.delivery_address }}"
-                                    placeholder="Delivery address">
+                                <div class="autocomplete-wrap">
+                                    <input
+                                        type="text"
+                                        class="form-input autosave-input delivery-input address-autocomplete"
+                                        data-driver-key="{{ d.driver_key }}"
+                                        value="{{ d.delivery_address }}"
+                                        placeholder="Delivery address">
+                                    <div class="suggestions-menu" id="suggestions-{{ d.driver_key }}"></div>
+                                </div>
                                 <div class="autosave-status" id="save-status-{{ d.driver_key }}"></div>
                             </td>
 
@@ -1249,8 +1293,6 @@
     <input type="hidden" name="driver_key" id="removeDriverKey">
 </form>
 
-<datalist id="addressSuggestions"></datalist>
-
 <script>
     const searchInput = document.getElementById("searchInput");
     const statusFilter = document.getElementById("statusFilter");
@@ -1264,12 +1306,13 @@
     const rowByKey = new Map(rows.map(row => [row.dataset.driverKey, row]));
     const panelSubtitle = document.getElementById("panelSubtitle");
     const defaultPanelSubtitle = panelSubtitle ? panelSubtitle.textContent.trim() : "";
-    const suggestionsList = document.getElementById("addressSuggestions");
     const nearestAddressInput = document.getElementById("nearestAddressInput");
+    const nearestSuggestions = document.getElementById("nearestSuggestions");
     const nearestSearchBtn = document.getElementById("nearestSearchBtn");
     const nearestClearBtn = document.getElementById("nearestClearBtn");
     const nearestStatus = document.getElementById("nearestStatus");
     const suggestionTimers = {};
+    let activeSuggestionMenu = null;
 
     function applyTableFilters() {
         const globalFilter = searchInput.value.toLowerCase().trim();
@@ -1468,15 +1511,61 @@
         milesInput.value = distanceValue || "";
     }
 
-    function updateSuggestionOptions(suggestions) {
-        suggestionsList.innerHTML = suggestions
-            .map(item => `<option value="${item.label.replace(/"/g, "&quot;")}"></option>`)
-            .join("");
+    function closeSuggestionMenu(menu) {
+        if (!menu) return;
+        menu.classList.remove("open");
+        menu.innerHTML = "";
+        if (activeSuggestionMenu === menu) {
+            activeSuggestionMenu = null;
+        }
     }
 
-    function fetchAddressSuggestions(value) {
+    function closeAllSuggestionMenus() {
+        document.querySelectorAll(".suggestions-menu").forEach(closeSuggestionMenu);
+    }
+
+    function getSuggestionMenu(input) {
+        if (input.id === "nearestAddressInput") {
+            return nearestSuggestions;
+        }
+        return document.getElementById(`suggestions-${input.dataset.driverKey}`);
+    }
+
+    function renderSuggestions(menu, input, suggestions) {
+        if (!menu) return;
+
+        if (!suggestions.length) {
+            closeSuggestionMenu(menu);
+            return;
+        }
+
+        menu.innerHTML = "";
+        suggestions.forEach(item => {
+            const option = document.createElement("div");
+            option.className = "suggestion-item";
+            option.textContent = item.label;
+            option.addEventListener("mousedown", function (event) {
+                event.preventDefault();
+                input.value = item.label;
+                closeSuggestionMenu(menu);
+                if (input.classList.contains("autosave-input")) {
+                    input.dispatchEvent(new Event("change", { bubbles: true }));
+                }
+            });
+            menu.appendChild(option);
+        });
+
+        closeAllSuggestionMenus();
+        menu.classList.add("open");
+        activeSuggestionMenu = menu;
+    }
+
+    function fetchAddressSuggestions(input) {
+        const value = input.value;
+        const menu = getSuggestionMenu(input);
+
         if (!value || value.trim().length < 3) {
-            suggestionsList.innerHTML = "";
+            closeSuggestionMenu(menu);
             return;
         }
 
@@ -1484,11 +1573,11 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    updateSuggestionOptions(result.suggestions || []);
+                    renderSuggestions(menu, input, result.suggestions || []);
                 }
             })
             .catch(() => {
-                suggestionsList.innerHTML = "";
+                closeSuggestionMenu(menu);
             });
     }
 
@@ -1497,9 +1586,26 @@
             const key = this.dataset.driverKey || this.id || "global";
             clearTimeout(suggestionTimers[key]);
             suggestionTimers[key] = setTimeout(() => {
-                fetchAddressSuggestions(this.value);
+                fetchAddressSuggestions(this);
             }, 250);
         });
+
+        input.addEventListener("focus", function () {
+            if (this.value.trim().length >= 3) {
+                fetchAddressSuggestions(this);
+            }
+        });
+
+        input.addEventListener("blur", function () {
+            const menu = getSuggestionMenu(this);
+            setTimeout(() => closeSuggestionMenu(menu), 120);
+        });
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest(".autocomplete-wrap") && !event.target.closest(".nearest-controls")) {
+            closeAllSuggestionMenus();
+        }
     });
 
     function clearNearestMeta() {
